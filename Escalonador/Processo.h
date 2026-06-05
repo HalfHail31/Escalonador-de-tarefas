@@ -15,6 +15,7 @@ public:
     int ingresso; //Ingresso definido pelo usuário
     int duracao; //Duração definida pelo usuário
     int quantum; //Tempo de duração de um quantum
+    int termino; //Tempo em que a tarefa terminou sua execução
     bool quantumMax; //A tarefa com essa flag ativa pode ser mudada em escalonamentos que consideram quantum
     int prioridade; //Prioridade definida pelo usuário
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
@@ -35,7 +36,6 @@ public:
 public:
 
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
-
     ~Processo();
 
     void desenha(RenderWindow* window);
@@ -45,7 +45,7 @@ public:
     void prosseguir(int tempoDecorrido);
     void retroceder();
     void mudaEstado();
-    void termina();
+    void termina(int tempoDecorrido);
 
     bool getAtiva();
     bool getIniciada();
@@ -54,6 +54,7 @@ public:
     int getTempoRestante();
     int getIngresso();
     int getDuracao();
+    int getTermino();
     int getEstadoQuantum();
     void setQuantum(int q);
     void resetaQuantum();

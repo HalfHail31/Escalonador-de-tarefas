@@ -4,21 +4,23 @@
 #define TAM 21
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p),
-ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0)
+ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1)
 {
     posX = ingresso * TAM;
     posY = y * TAM * 2;
 
-    if (!fonte.loadFromFile("OpenSans.ttf"))
+    if (fonte.loadFromFile("OpenSans.ttf"))
+    {
+        legenda.setFont(fonte);
+        legenda.setString(id);
+        legenda.setCharacterSize(TAM);
+        legenda.setFillColor(sf::Color::White);
+        legenda.setStyle(sf::Text::Bold);
+    }
+    else
         std::cout << "Erro ao carregar fonte!" << std::endl;
-    legenda.setFont(fonte);
-    legenda.setString(id);
-    legenda.setCharacterSize(TAM);
-    legenda.setFillColor(sf::Color::White);
-    legenda.setStyle(sf::Text::Bold);
-
-    std::cout << posX << std::endl;
-    std::cout << "Ola, eu existo e tenho" << "\n" << "id: " << id << " cor: " << c << " ingresso: " << ingresso << " duracao: " << duracao << " prioridade: " << prioridade << std::endl;
+    //std::cout << posX << std::endl;
+    //std::cout << "Ola, eu existo e tenho" << "\n" << "id: " << id << " cor: " << c << " ingresso: " << ingresso << " duracao: " << duracao << " prioridade: " << prioridade << std::endl;
 }
 
 Processo::~Processo()
@@ -40,8 +42,11 @@ void Processo::desenha(RenderWindow* window)
     {
         window->draw(*(tamanho[i]));
     }
-    legenda.setPosition(posX + TAM, posY);
-    window->draw(legenda);
+    if (iniciada)
+    {
+        legenda.setPosition(posX + TAM, posY);
+        window->draw(legenda);
+    }
 }
 
 void Processo::executar(int tempoDecorrido)
@@ -67,7 +72,7 @@ void Processo::executar(int tempoDecorrido)
     prosseguir(tempoDecorrido);
 
     if (tempoExecutado >= duracao && !terminada)
-        termina();
+        termina(tempoDecorrido);
 }
 
 //Função para o modo Por Etapas
@@ -90,20 +95,20 @@ void Processo::executarPassos(int tempoDecorrido)
         tempoExecutado++;
 
     if (tempoExecutado >= duracao && !terminada)
-        termina();
+        termina(tempoDecorrido);
 }
 
 //Define a cor do processo
 void Processo::setCor(RectangleShape* rect)
 {
     //Se estiver terminada, azul
-    if (terminada)
-    {
-        rect->setFillColor(sf::Color::Blue);
-        legenda.setFillColor(sf::Color::Blue);
-    }
+    //if (terminada)
+    //{
+    //    rect->setFillColor(sf::Color::Blue);
+    //    legenda.setFillColor(sf::Color::Blue);
+    //}
 
-    else if (suspensa)
+    if (suspensa)
     {
         rect->setFillColor(sf::Color::Black);
         legenda.setFillColor(sf::Color::Black);
@@ -168,10 +173,11 @@ void Processo::mudaEstado()
     ativa = !ativa;
 }
 
-void Processo::termina()
+void Processo::termina(int tempoDecorrido)
 {
     terminada = true;
-    std::cout << "terminado" << std::endl;
+    termino = tempoDecorrido;
+    //std::cout << "terminado" << termino << std::endl;
 }
 
 bool Processo::getAtiva()
@@ -209,6 +215,11 @@ int Processo::getDuracao()
     return duracao;
 }
 
+int Processo::getTermino()
+{
+    return termino;
+}
+
 int Processo::getEstadoQuantum()
 {
     return quantumMax;
@@ -222,5 +233,5 @@ void Processo::setQuantum(int q)
 void Processo::resetaQuantum()
 {
     quantumMax = false;
-    //tempoComCPU = 0;
+    tempoComCPU = 0;
 }

@@ -9,7 +9,12 @@ Sistema* criaSimulador()
 {
     std::string sistema; //Linha dedicada à leitura dos dados do sistema
     std::string processo; //Linha/s dedicada/s à leitura dos dados do/s processo/s
-    std::ifstream arquivo("Processo.txt"); //Nome padrão da entrada
+    
+    std::string arq;
+    std::cout << "Insira o nome do arquivo: " << std::endl;
+    std::cin >> arq;
+    
+    std::ifstream arquivo(arq); //Nome padrão da entrada
     int y = 0; //Contador de linhas para instanciar processos em valores y distintos da tela
 
     if (arquivo.is_open())
