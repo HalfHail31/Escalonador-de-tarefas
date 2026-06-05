@@ -4,7 +4,7 @@
 #define TAM 21
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p),
-ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0)
+ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0)
 {
     posX = ingresso * TAM;
     posY = y * TAM * 2;
@@ -46,13 +46,21 @@ void Processo::desenha(RenderWindow* window)
 
 void Processo::executar(int tempoDecorrido)
 {
-    if (tempoDecorrido < ingresso) //Não tem porque seguir se o processo ainda não ingressou
+    if (tempoDecorrido < ingresso || terminada) //Não tem porque seguir se o processo ainda não ingressou ou já terminou
         return;
 
     if (!iniciada)
         iniciada = true;
 
-    //Se ativada e não terminada, executa e adiciona ao tempo de execução
+    if (ativa)
+        tempoComCPU++;
+    else
+        resetaQuantum();
+    
+    if (tempoComCPU == quantum)
+        quantumMax = true;
+
+    //Se ativa e não terminada incrementa o tempoExecutado
     if (ativa && !terminada)
         tempoExecutado++;
 
@@ -65,7 +73,7 @@ void Processo::executar(int tempoDecorrido)
 //Função para o modo Por Etapas
 void Processo::executarPassos(int tempoDecorrido)
 {
-    if (tempoDecorrido < ingresso) //Não tem porque seguir se o processo ainda não ingressou
+    if (tempoDecorrido < ingresso) //Não tem porque seguir se o processo ainda não ingressou ou já terminou
         return;
 
     if (!iniciada)
@@ -199,4 +207,20 @@ int Processo::getIngresso()
 int Processo::getDuracao()
 {
     return duracao;
+}
+
+int Processo::getEstadoQuantum()
+{
+    return quantumMax;
+}
+
+void Processo::setQuantum(int q)
+{
+    quantum = q;
+}
+
+void Processo::resetaQuantum()
+{
+    quantumMax = false;
+    //tempoComCPU = 0;
 }

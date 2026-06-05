@@ -35,7 +35,7 @@ Sistema* criaSimulador()
         ss >> cpus >> sep; //Anota números antes de ; em cpus
         Sistema* sist = new Sistema(algoritmo, quantum, cpus); //Instancia o sistema com os valores recolhidos
 
-        while (std::getline(arquivo, processo)) //Enquanto ainda houverem linhas para serem lidas, faça
+        while (std::getline(arquivo, processo)) //Enquanto ainda houverem linhas para serem lidas
         {
             std::stringstream ss(processo);
             std::string id;
@@ -67,8 +67,6 @@ Sistema* criaSimulador()
     }
 
 }
-
-
 
 int main()
 {

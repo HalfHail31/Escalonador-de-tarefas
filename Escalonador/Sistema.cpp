@@ -45,7 +45,10 @@ Sistema::~Sistema()
 void Sistema::recebeProcesso(Processo* p)
 {
     if (p)
+    {
+        p->setQuantum(quantum);
         processos.push_back(p);
+    }
 }
 
 void Sistema::cedeProcessador(Processo* p)
@@ -102,81 +105,65 @@ void Sistema::setJanela(sf::RenderWindow* w)
 
 void Sistema::executarPRIOp(int tempoDecorrido, float dt)
 {
-    tempo += dt;
-    //std::cout << tempo << "\n";
-
     if (processos.empty()) //Não continua se não existirem processos
         return;
 
     int tam = processos.size();
-    int inativos = 0;
 
     for (int i = 0; i < tam; i++) //Retira CPUs cedidas a processos que já terminaram
     {
         if (processos[i]->getTerminada() && processos[i]->getAtiva())
             retiraProcessador(processos[i]);
-
-        if (!processos[i]->getAtiva() && processos[i]->getIniciada())
-            inativos++;
     }
 
-    bool pula = false;
-    if (tempoDecorrido == 0 || CPUsLivres > 0) //Pula o quantum se o Sistema acabou de iniciar ou se existem CPUs livres
-        pula = true;
-
-    //Preempção para caso houver passado um quantum de tempo
-    if (tempo > quantum || pula)
+    for (int i = 0; i < CPUs; i++) //Itera para cada CPU
     {
-        if (tempo > quantum) //Se foi um pulo de quantum, não tem porque resetar o timer
+        int prioritario = -1;
+
+        for (int j = 0; j < tam; j++) //Percorre a lista de processos
         {
-            tempo = 1; //Quando passar por aqui, executa as próximas linhas e reseta o contador para um novo quantum se iniciar
-            std::cout << "passou um quantum!\n";
+            //Busca os processos iniciados e sem CPUs
+            if (tempoDecorrido >= processos[j]->getIngresso() && !processos[j]->getTerminada() && !processos[j]->getAtiva())
+            {
+                if (prioritario == -1 || processos[j]->getPrioridade() > processos[prioritario]->getPrioridade())
+                {
+                    prioritario = j;
+                }
+                if (prioritario != j && processos[prioritario]->getPrioridade() == processos[j]->getPrioridade())
+                    if (desempate(processos[prioritario], processos[j]))
+                        prioritario = j;
+
+            }
         }
 
-        for (int i = 0; i < CPUs; i++) //Itera para cada CPU
+        if (prioritario == -1) //Nenhum processo precisa de CPU no momento
         {
-            int prioritario = -1;
+            desativaProcessadores();
+            break;
+        }
+        
+        if (CPUsLivres > 0) //Se tiver CPUs livres, pode ceder uma para o prioritário
+            cedeProcessador(processos[prioritario]);
+
+        else if (CPUsLivres == 0)// && inativos > 0)//Só pode retirar CPUs se nenhuma CPU estiver livre e existirem processos inativos
+        {
+            int menorPrioridade = -1;
 
             for (int j = 0; j < tam; j++) //Percorre a lista de processos
             {
-                //Busca os processos iniciados e sem CPUs
-                if (tempoDecorrido >= processos[j]->getIngresso() && !processos[j]->getTerminada() && !processos[j]->getAtiva())
+                if (processos[j]->getAtiva()) //Busca os processos ativos
                 {
-                    if (prioritario == -1 || desempate(processos[prioritario], processos[j]))
-                        prioritario = j;
+                    //Busca aquele com a menor prioridade
+                    if (menorPrioridade == -1 || processos[j]->getPrioridade() < processos[menorPrioridade]->getPrioridade())
+                        menorPrioridade = j;
                 }
             }
-
-            if (prioritario == -1) //Nenhum processo quer CPU no momento
+            
+            if (menorPrioridade != -1 && processos[prioritario]->getPrioridade() > processos[menorPrioridade]->getPrioridade())
             {
-                desativaProcessadores();
-                break;
-            }
-
-            if (CPUsLivres > 0) //Se tiver CPUs livres, pode ceder uma para o prioritário
+                //Se a menor prioridade for menor que o prioritário, seu processador será removido e entregue ao prioritário
+                retiraProcessador(processos[menorPrioridade]);
                 cedeProcessador(processos[prioritario]);
-
-            else if (CPUsLivres == 0 && inativos > 0 && !pula) //Só retira CPUs se passar um quantum, nenhuma CPU estiver livre e existirem processos inativos
-            {
-                int menorPrioridade = -1;
-
-                for (int j = 0; j < tam; j++) //Percorre a lista de processos
-                {
-                    if (processos[j]->getAtiva()) //Busca os processos ativos
-                    {
-                        //Busca aquele com a menor prioridade
-                        if (menorPrioridade == -1 || processos[j]->getPrioridade() < processos[menorPrioridade]->getPrioridade())
-                            menorPrioridade = j;
-                    }
-                }
-
-                if (menorPrioridade != -1 && processos[prioritario]->getPrioridade() > processos[menorPrioridade]->getPrioridade())
-                {
-
-                    //Se a menor prioridade for menor que o prioritário, seu processador será removido e entregue ao prioritário
-                    retiraProcessador(processos[menorPrioridade]);
-                    cedeProcessador(processos[prioritario]);
-                }
             }
         }
     }
@@ -294,11 +281,10 @@ void Sistema::executarSRTF(int tempoDecorrido, float dt)
 
 void Sistema::executar(int tempoDecorrido, float dt)
 {
-    tempo += dt;
-    //std::cout << tempo << "\n";
-
     if (processos.empty()) //Não continua se não existirem processos
         return;
+
+    //tempo += dt;
 
     int tam = processos.size();
     int inativos = 0;
@@ -306,8 +292,16 @@ void Sistema::executar(int tempoDecorrido, float dt)
     //Executa PRIOp
     if (algoritmo == "priop")
     {
-        std::cout << "priop" << std::endl;
-        executarPRIOp(tempoDecorrido, dt);
+        for (int i = 0; i < tam; i++) //É necessário escalonar?
+        {
+            //Se alguma tarefa acabou de ingressar ou terminar, ou já executou durante o tempo de um quantum, devemos chamar o escalonamento
+            if (processos[i]->getIngresso() == tempoDecorrido || (processos[i]->getTerminada()) || processos[i]->getEstadoQuantum())
+            {
+                std::cout << "Escalonando com PRIOp" << std::endl;
+                executarPRIOp(tempoDecorrido, dt);
+                break;
+            }
+        }
     }
 
     //Executa SRTF
@@ -327,7 +321,8 @@ void Sistema::executar(int tempoDecorrido, float dt)
     else
     {
         for (int i = 0; i < tam; i++)
-            processos[i]->executar(tempoDecorrido);
+            if (!processos[i]->getTerminada()) //Não precisa mais executar uma tarefa que já terminou
+                processos[i]->executar(tempoDecorrido);
     }
 
 }
@@ -339,14 +334,24 @@ bool Sistema::desempate(Processo* atual, Processo* candidato)
 
     // Desempate (1)
     // Processo já executando
-    std::cout << "Empate" << std::endl << "Mantendo o ja ativo." << std::endl;
+    std::cout << "Empate" << std::endl;
+    std::cout << "Mantendo aquele que não passou um quantum." << std::endl;
+    if (candidato->getEstadoQuantum() && !atual->getEstadoQuantum())
+        return true;
+
+    if (!candidato->getEstadoQuantum() && atual->getEstadoQuantum())
+        return false;
+
+    // Desempate (2)
+    // Processo já executando
+    std::cout << "Mantendo o ja ativo." << std::endl;
     if (candidato->getAtiva() && !atual->getAtiva())
         return true;
 
     if (!candidato->getAtiva() && atual->getAtiva())
         return false;
 
-    // Desempate (2)
+    // Desempate (3)
     // Menor ingresso
     std::cout << "Mantendo o de menor ingresso." << std::endl;
     if (candidato->getIngresso() < atual->getIngresso())
@@ -355,7 +360,7 @@ bool Sistema::desempate(Processo* atual, Processo* candidato)
     if (candidato->getIngresso() > atual->getIngresso())
         return false;
 
-    // Desempate (3)
+    // Desempate (4)
     // Menor duração
     std::cout << "Mantendo o de menor duracao." << std::endl;
     if (candidato->getDuracao() < atual->getDuracao())
@@ -364,7 +369,7 @@ bool Sistema::desempate(Processo* atual, Processo* candidato)
     if (candidato->getDuracao() > atual->getDuracao())
         return false;
 
-    // Desempate (4)
+    // Desempate (5)
     // Sorteio
     std::cout << "Sorteando aleatorio." << std::endl;
     return rand() % 2;

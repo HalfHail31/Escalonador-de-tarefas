@@ -6,9 +6,7 @@
 using namespace::sf;
 
 class Processo
-
 {
-
 public:
     std::string id; //Identificador definido pelo usuário
     sf::Color cor; //Cor definida pelo usuário
@@ -16,6 +14,8 @@ public:
     sf::Font fonte; //Fonte para a legenda
     int ingresso; //Ingresso definido pelo usuário
     int duracao; //Duração definida pelo usuário
+    int quantum; //Tempo de duração de um quantum
+    bool quantumMax; //A tarefa com essa flag ativa pode ser mudada em escalonamentos que consideram quantum
     int prioridade; //Prioridade definida pelo usuário
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de iterações da função criaSimulador()
@@ -24,7 +24,9 @@ public:
     bool iniciada; //Define se o processo já iniciou, isto é, ingressou no Sistema
     bool suspensa; ///Define se o processo está suspenso
     int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela já terminou sua execução
+    int tempoComCPU; //Para contar o tempo para a passagem do quantum
     int tempoOcioso; //Para processos que ficarem muito tempo ociosos possam aumentar temporariamente sua prioridade
+
     float timerPasso; //Pequeno delay exclusivo da execução passo a passo
     int contaPassos; //Substitui os segundos no modo passo a passo
 
@@ -52,4 +54,7 @@ public:
     int getTempoRestante();
     int getIngresso();
     int getDuracao();
+    int getEstadoQuantum();
+    void setQuantum(int q);
+    void resetaQuantum();
 };
