@@ -1,10 +1,10 @@
 #include "Processo.h"
 #include <iostream>
 
-#define TAM 21
+#define TAM 15
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p),
-ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1)
+ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1)
 {
     posX = ingresso * TAM;
     posY = y * TAM * 2;
@@ -76,53 +76,48 @@ void Processo::executar(int tempoDecorrido)
 }
 
 //Função para o modo Por Etapas
-void Processo::executarPassos(int tempoDecorrido)
+void Processo::executarPassos(int tempoDecorrido, int dir)
 {
-    if (tempoDecorrido < ingresso) //Não tem porque seguir se o processo ainda não ingressou ou já terminou
+    if (tempoDecorrido < ingresso) //Não tem porque seguir se o processo ainda não ingressou
         return;
 
     if (!iniciada)
         iniciada = true;
 
     //Detecta teclas do teclado
-    if (Keyboard::isKeyPressed(Keyboard::Left))
-        retroceder();
+    if (dir == -1)
+        retroceder(tempoDecorrido);
 
-    if (Keyboard::isKeyPressed(Keyboard::Right))
+    if (dir == 1)
         prosseguir(tempoDecorrido);
 
-    if (ativa && !terminada)
+    if (ativa && dir == 1)
         tempoExecutado++;
 
     if (tempoExecutado >= duracao && !terminada)
         termina(tempoDecorrido);
 }
 
-//Define a cor do processo
-void Processo::setCor(RectangleShape* rect)
+void Processo::setCor(RectangleShape* rect) //Define a cor do processo
 {
     //Se estiver terminada, azul
-    //if (terminada)
-    //{
-    //    rect->setFillColor(sf::Color::Blue);
-    //    legenda.setFillColor(sf::Color::Blue);
-    //}
+    if (terminada)
+    {
+        rect->setFillColor(sf::Color::Blue);
+        legenda.setFillColor(sf::Color::Blue);
+    }
 
-    if (suspensa)
+    if (suspensa) //Se estiver sispensa, preto
     {
         rect->setFillColor(sf::Color::Black);
         legenda.setFillColor(sf::Color::Black);
     }
-
-    //Se estiver ativa, a cor definida pelo usuário
-    else if (ativa)
+    else if (ativa) //Se estiver ativa, usa a cor definida pelo usuário
     {
         rect->setFillColor(cor);
         legenda.setFillColor(cor);
     }
-
-    //Se estiver inativa, branco
-    else if (!ativa)
+    else if (!ativa) //Se estiver inativa, branco
     {
         rect->setFillColor(sf::Color::White);
         legenda.setFillColor(sf::Color::White);
@@ -140,33 +135,120 @@ void Processo::prosseguir(int tempoDecorrido)
     setCor(rect);
     tamanho.push_back(rect);
 }
-
-void Processo::retroceder() //Função incompleta, remove o último retângulo e recupera seu estado anterior
+/*
+void Processo::retroceder(int tempoDecorrido) //Remove o último retângulo e recupera seu estado anterior
 {
-    if (!tamanho.empty())
+    if (tamanho.empty()) //Verificação de segurança: Vector vazio
+        return;
+    if (tempoDecorrido < ingresso) //Uma tarefa que não ingressou não possui um estado anterior
+        return;
+    if (terminada && tempoDecorrido > termino) //Uma tarefa terminada só precisa retroceder em seu momento de termino
+        return;
+
+    int tam = (int)tamanho.size();
+    //if (tam < 2) //Não tem para onde retroceder se o Vector não tem mais elementos
+       // return;
+
+    RectangleShape* rect = tamanho.back(); //Pega o último elemento do vector
+
+    //Se estiver no momento de término, houve mudança de estado para terminado e devemos desfazê-la ao retroceder
+    if (terminada)
     {
-        int tam = (int)tamanho.size();
-
-        if (tam < 2)
-            return;
-        RectangleShape* rect = tamanho.back();
-
-        //Se o atual for azul, e o anterior não, houve mudança de estado para terminado.
-        if (rect->getFillColor() == sf::Color::Blue && tamanho[tam - 2]->getFillColor() != sf::Color::Blue && terminada == true)
-            terminada = false;
-        else if (rect->getFillColor() == cor && tamanho[tam - 2]->getFillColor() != cor) {
-            ativa = false;
-            tempoExecutado--;
-        }
-        //Se o atual for verde, ele executou, e ao retroceder, seu tempo executado deve ser decrementado
-        else if (rect->getFillColor() == cor && terminada == false)
-            tempoExecutado--;
-        setCor(rect);
-        posX -= TAM;
-        tamanho.pop_back();
-        delete rect;
+        terminada = false;
+        termino = -1;
     }
-}
+    //Se o atual for "cor" ele executou, e ao retroceder, seu tempo executado deve ser decrementado
+    if (rect->getFillColor() == cor)
+    {
+        if (tam > 2 && tamanho[tam - 2]->getFillColor() != cor) //Se estava inativa na etapa anterior, volta a ficar inativa
+            ativa = false;
+            
+        if (tempoExecutado > 0)
+            tempoExecutado--;
+    }
+    posX -= TAM;
+    tamanho.pop_back();
+    if(!tamanho.empty())
+        setCor(tamanho.back());
+    delete rect;
+}*/
+/*
+void Processo::retroceder(int tempoDecorrido)
+{
+    if (tempoDecorrido < ingresso) return;
+    if (tamanho.empty()) return;
+
+    RectangleShape* last = tamanho.back();
+    int lastTime = static_cast<int>(last->getPosition().x / TAM);
+    if (lastTime <= tempoDecorrido) return; // nada a desfazer
+
+    int tam = (int)tamanho.size();
+    sf::Color lastColor = last->getFillColor();
+    sf::Color prevColor = (tam >= 2) ? tamanho[tam - 2]->getFillColor() : sf::Color::White;
+
+    // desfaz término se terminou exatamente naquele último passo
+    if (terminada && termino == lastTime) {
+        terminada = false;
+        termino = -1;
+    }
+
+    // ajustar tempoExecutado / ativa com base na cor do último e no anterior
+    if (lastColor == cor) 
+    {
+        if (tempoExecutado > 0) tempoExecutado--;
+    }
+    ativa = (prevColor == cor);
+
+    delete last;
+    tamanho.pop_back();
+    posX = tamanho.empty() ? ingresso * TAM : tamanho.back()->getPosition().x;
+    if (!tamanho.empty()) setCor(tamanho.back());
+    else iniciada = false;
+}VERSAO DO COPILOT*/
+
+void Processo::retroceder(int tempoDecorrido)
+{
+    if (tamanho.empty()) return;
+
+    // Remove com segurança os retângulos que estão à frente do tempo atual
+    while (!tamanho.empty() && static_cast<int>(tamanho.back()->getPosition().x / TAM) > tempoDecorrido)
+    {
+        RectangleShape* last = tamanho.back();
+        int lastTime = static_cast<int>(last->getPosition().x / TAM);
+
+        if (terminada && termino == lastTime) {
+            terminada = false;
+            termino = -1;
+        }
+
+        // Se o que estamos apagando era um bloco executado, devolve o tempo
+        if (last->getFillColor() == cor)
+        {
+            if (tempoExecutado > 0) tempoExecutado--;
+        }
+
+        delete last;
+        tamanho.pop_back();
+    }
+
+    // Recalcula o estado com base no novo topo do vetor (se ainda houver elementos)
+    int tamAtual = (int)tamanho.size();
+    if (tamAtual > 0)
+    {
+        posX = tamanho.back()->getPosition().x;
+        sf::Color prevColor = tamanho.back()->getFillColor();
+        ativa = (prevColor == cor);
+        setCor(tamanho.back());
+    }
+    else
+    {
+        // Se limpou tudo, reseta o estado inicial do processo
+        posX = ingresso * TAM;
+        iniciada = false;
+        ativa = false;
+        removeCPU();
+    }
+}//VERSAO DO GEMINI
 
 void Processo::mudaEstado()
 {
@@ -234,4 +316,19 @@ void Processo::resetaQuantum()
 {
     quantumMax = false;
     tempoComCPU = 0;
+}
+
+void Processo::recebeCPU(int indice)
+{
+    indiceCPU = indice;
+}
+
+void Processo::removeCPU()
+{
+    indiceCPU = -1;
+}
+
+int Processo::getIndiceCPU()
+{
+    return indiceCPU;
 }

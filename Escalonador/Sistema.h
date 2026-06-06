@@ -38,9 +38,10 @@ public:
     void desativaProcessadores();
     void setJanela(sf::RenderWindow* w);
 
-    void executarPRIOp(int tempoDecorrido, float dt);
-    void executarSRTF(int tempoDecorrido, float dt);
-    void executar(int tempoDecorrido, float dt);
+    void executarPRIOp(int tempoDecorrido);
+    void executarSRTF(int tempoDecorrido);
+    void executar(int tempoDecorrido, int dir);
+    void verificaEscalonamento(Processo* p, int tempoDecorrido);
     bool desempate(Processo* atual, Processo* candidato);
 
     void setAlgoritmo(std::string alg);
@@ -51,5 +52,4 @@ public:
     void mudaModo();
     bool getPorEtapas();
     void simulaEtapas(int tempoDecorrido);
-
 };

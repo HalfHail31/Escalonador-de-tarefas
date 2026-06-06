@@ -7,7 +7,7 @@ using namespace::sf;
 
 class Processo
 {
-public:
+private:
     std::string id; //Identificador definido pelo usuário
     sf::Color cor; //Cor definida pelo usuário
     sf::Text legenda; //Legenda dos processos
@@ -18,6 +18,7 @@ public:
     int termino; //Tempo em que a tarefa terminou sua execução
     bool quantumMax; //A tarefa com essa flag ativa pode ser mudada em escalonamentos que consideram quantum
     int prioridade; //Prioridade definida pelo usuário
+    int indiceCPU; //Índice da CPU recebida para executar
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de iterações da função criaSimulador()
     bool ativa; //Define se o processo está executando
@@ -40,10 +41,10 @@ public:
 
     void desenha(RenderWindow* window);
     void executar(int tempoDecorrido);
-    void executarPassos(int tempoDecorrido);
+    void executarPassos(int tempoDecorrido, int dir);
     void setCor(RectangleShape* rect);
     void prosseguir(int tempoDecorrido);
-    void retroceder();
+    void retroceder(int tempoDecorrido);
     void mudaEstado();
     void termina(int tempoDecorrido);
 
@@ -58,4 +59,7 @@ public:
     int getEstadoQuantum();
     void setQuantum(int q);
     void resetaQuantum();
+    void recebeCPU(int indice);
+    void removeCPU();
+    int getIndiceCPU();
 };

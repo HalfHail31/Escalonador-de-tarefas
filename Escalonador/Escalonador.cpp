@@ -10,9 +10,9 @@ Sistema* criaSimulador()
     std::string sistema; //Linha dedicada à leitura dos dados do sistema
     std::string processo; //Linha/s dedicada/s à leitura dos dados do/s processo/s
     
-    std::string arq;
-    std::cout << "Insira o nome do arquivo: " << std::endl;
-    std::cin >> arq;
+    std::string arq = "Processo.txt";
+    //std::cout << "Insira o nome do arquivo a ser lido: " << std::endl << ">";
+    //std::cin >> arq;
     
     std::ifstream arquivo(arq); //Nome padrão da entrada
     int y = 0; //Contador de linhas para instanciar processos em valores y distintos da tela
@@ -96,7 +96,7 @@ int main()
         timerTecla += dt;
         float tick = 1;
 
-        if (fast)
+        if (fast) //Modo fast-foward faz o tick ser mais curto
             tick = 0.1;
 
         if (sistema->getPorEtapas())
@@ -125,26 +125,27 @@ int main()
 
         if (Keyboard::isKeyPressed(Keyboard::Space) && timerTecla > 0.25) //Altera o modo do Sistema de automático para passo a passo e vice-versa
         {
-            std::cout << "AOBA";
+            std::cout << "AOBA\n";
             sistema->mudaModo();
             timerTecla = 0;
         }
 
-        if (Keyboard::isKeyPressed(Keyboard::Down) && timerTecla > 0.25) //Altera o modo do Sistema de automático para passo a passo e vice-versa
+        if (Keyboard::isKeyPressed(Keyboard::Down) && timerTecla > 0.15) //Ativa ou desativa o modo fast-forward
         {
-            fast = true;
+            fast = !fast;
             timerTecla = 0;
         }
 
         window.clear(background); //Limpa a janela
-        if (timer >= tick)
+        if (timer >= tick) //Se passou um tick, o sistema executa
         {
-            if (!sistema->getPorEtapas()) //A cada segundo decorrido, faça (modo automático)
+            //std::cout << "Tempo global SINIINI: " << tempoSimulador << std::endl;
+            if (!sistema->getPorEtapas()) //A cada segundo decorrido (modo automático)
             {
                 tempoQuantum = 1; //Envia o tempo a cada 1s para Sistema
                 
-                sistema->executar(tempoSimulador, tempoQuantum);
-                std::cout << "Tempo global: " << tempoSimulador << std::endl;
+                sistema->executar(tempoSimulador, 1);
+                std::cout << "Tempo global SINISTRO: " << tempoSimulador << std::endl;
                 tempoSimulador++; //tempoSimulador registra o tempo global do Sistema, portanto não é resetado
                 timer = 0;
                 tempoQuantum = 0;
@@ -152,33 +153,28 @@ int main()
 
             else if (sistema->getPorEtapas())
             {
-                if (Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::Right)))//A cada 0.2 segundo decorrido, faça (modo passo a passo)
+                if (Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::Right)))//A cada 0.2 segundo decorrido (modo passo a passo)
                 {
-                    tempoQuantum = 1; //Arredonda o tempo para 1 segundo
-                    std::cout << "Tempo global: " << tempoSimulador << std::endl;
-
                     if (Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right))
                     {
                         if (tempoSimulador > 0)
                             tempoSimulador--;
-                        //tempoQuantum--;
-
+                        tempoQuantum = 1;
+                        sistema->executar(tempoSimulador, -1);
+                        timer = 0;
+                        std::cout << "Tempo global: " << tempoSimulador << std::endl;
                     }
-                    //if (tempoSimulador < 0)
-                        //tempoSimulador = 0;
+
                     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left))
                     {
-                        tempoSimulador++; //Atualiza o tempo global do Simulador
-
-                    }
-                    
-                    tempoQuantum = 1;
-                        sistema->executar(tempoSimulador, tempoQuantum);
-
+                        tempoSimulador++;
+                        std::cout << "Tempo global: " << tempoSimulador << std::endl;
+                        tempoQuantum = 1;
+                        sistema->executar(tempoSimulador, 1);
                         timer = 0;
+                    }
                 }
             }
-
         }
 
         sistema->desenhaProcessos(); //Desenha na janela
