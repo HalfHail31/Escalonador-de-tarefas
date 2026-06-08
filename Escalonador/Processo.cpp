@@ -332,3 +332,29 @@ int Processo::getIndiceCPU()
 {
     return indiceCPU;
 }
+
+std::string Processo::getId()
+{
+    return id;
+}
+
+void Processo::setCor(unsigned long int cor)
+{
+    sf::Color c((cor << 8) | 0xFF);
+    this->cor = c;
+}
+
+void Processo::setIngresso(int ing)
+{
+    ingresso = ing;
+}
+
+void Processo::setDuracao(int d)
+{
+    duracao = d;
+}
+
+void Processo::setPrioridade(int p)
+{
+    prioridade = p;
+}

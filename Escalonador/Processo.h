@@ -35,7 +35,6 @@ private:
     std::vector<RectangleShape*> tamanho; //Guarda retângulos para o processo ser exibido maior a cada avanço no tempo
 
 public:
-
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
     ~Processo();
 
@@ -62,4 +61,10 @@ public:
     void recebeCPU(int indice);
     void removeCPU();
     int getIndiceCPU();
+
+    std::string getId(); //Funções para editar uma tarefa
+    void setCor(unsigned long int cor);
+    void setIngresso(int ing);
+    void setDuracao(int d);
+    void setPrioridade(int p);
 };

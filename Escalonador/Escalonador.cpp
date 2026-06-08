@@ -1,4 +1,5 @@
 #include "Sistema.h"
+#include "Controlador.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -76,7 +77,11 @@ Sistema* criaSimulador()
 int main()
 {
     Sistema* sistema = criaSimulador(); //Cria uma instância de Sistema para a simulação
-    sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador"); //Instância de janela SFML
+    Controlador control;
+    control.setSistema(sistema);
+
+    sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador", sf::Style::Titlebar | sf::Style::Close); //Instância de janela SFML
+    window.setPosition(sf::Vector2i(0, 150));
 
     sf::Clock clock; //Variável de registro de tempo da SFML
     float timer = 0; //Contador de tempo em float para chamada executar do sistema (a cada 1s)

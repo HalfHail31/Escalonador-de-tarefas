@@ -44,7 +44,10 @@ public:
     void verificaEscalonamento(Processo* p, int tempoDecorrido);
     bool desempate(Processo* atual, Processo* candidato);
 
-    void setAlgoritmo(std::string alg);
+    void setAlgoritmo(std::string alg);///
+    void setQuantum(int q); //////////////Funções para editar o sistema
+    void setProcessadores(int c); ////////
+
     std::string getAlgoritmo();
 
     void desenhaProcessos();
@@ -52,4 +55,5 @@ public:
     void mudaModo();
     bool getPorEtapas();
     void simulaEtapas(int tempoDecorrido);
+    std::vector<Processo*> getProcessos();
 };

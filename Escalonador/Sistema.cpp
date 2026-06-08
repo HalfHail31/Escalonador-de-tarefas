@@ -294,7 +294,7 @@ bool Sistema::desempate(Processo* atual, Processo* candidato)
     // Desempate (1)
     // Processo com quantum completo
     std::cout << "Empate" << std::endl;
-    std::cout << "Mantendo aquele que não passou um quantum." << std::endl;
+    std::cout << "Mantendo aquele que nao passou um quantum." << std::endl;
     if (!candidato->getEstadoQuantum() && atual->getEstadoQuantum())
         return true;
 
@@ -336,7 +336,51 @@ bool Sistema::desempate(Processo* atual, Processo* candidato)
 
 void Sistema::setAlgoritmo(std::string alg)
 {
+    // Converte para minúsculo
+    std::transform(
+        alg.begin(),
+        alg.end(),
+        alg.begin(),
+        ::tolower
+    );
     algoritmo = alg;
+}
+
+void Sistema::setQuantum(int q)
+{
+    if (q > 0)
+        quantum = q;
+}
+
+void Sistema::setProcessadores(int c)
+{
+    if (c > 0)
+    {
+        CPUs = c;
+
+        int size = (int)processadores.size();
+        for (int i = 0; i < size; i++)
+            delete processadores[i];
+        
+        for (int i = CPUs; i > 0; i--) //Recria processadores
+        {
+            sf::CircleShape* circulo = new sf::CircleShape;
+            circulo->setRadius(RAIO_PROCESSADOR);
+            circulo->setFillColor(sf::Color::Green);
+            circulo->setPosition(LARGURA_TELA - RAIO_PROCESSADOR * (i * 2) - 5 * i, ALTURA_TELA - 2.5 * RAIO_PROCESSADOR);
+            processadores.push_back(circulo);
+        }
+        //Recria legenda
+        sf::Vector2f posUltimaCPU = processadores[0]->getPosition();
+        if (!fonte.loadFromFile("OpenSans.ttf"))
+            std::cout << "Erro ao carregar fonte!" << std::endl;
+        legenda.setFont(fonte);
+        legenda.setString("Processadores:");
+        legenda.setCharacterSize(18);
+        legenda.setFillColor(sf::Color::Black);
+        legenda.setStyle(sf::Text::Bold);
+        legenda.setPosition(posUltimaCPU.x - 150, posUltimaCPU.y + 10);
+    }
 }
 
 std::string Sistema::getAlgoritmo()
@@ -397,4 +441,9 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Função para modo Por Etapas
             verificaEscalonamento(processos[i], tempoDecorrido);
         }
     }
+}
+
+std::vector<Processo*> Sistema::getProcessos()
+{
+    return processos;
 }
