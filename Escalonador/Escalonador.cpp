@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-Sistema* criaSimulador()
+Sistema* criaSimulador(Controlador* controle)
 {
     std::string sistema; //Linha dedicada à leitura dos dados do sistema
     std::string processo; //Linha/s dedicada/s à leitura dos dados do/s processo/s
@@ -40,6 +40,7 @@ Sistema* criaSimulador()
         ss >> quantum >> sep; //Anota números antes de ; em quantum
         ss >> cpus >> sep; //Anota números antes de ; em cpus
         Sistema* sist = new Sistema(algoritmo, quantum, cpus); //Instancia o sistema com os valores recolhidos
+        controle->setSistema(sist); //Para controlar e consultar os dados do sistema
 
         while (std::getline(arquivo, processo)) //Enquanto ainda houverem linhas para serem lidas
         {
@@ -57,11 +58,7 @@ Sistema* criaSimulador()
             ss >> duracao >> sep;
             ss >> prioridade >> sep;
 
-            Processo* p = new Processo(id, cor, ingresso, duracao, prioridade, y); //Instancia um processo para esta iteração, y define sua altura y na tela
-            y++; //Incrementa para o próximo processo
-            if (p)
-                sist->recebeProcesso(p); //Registra os processos no Sistema
-            //std::cout << id << " " << cor << " " << ingresso << " " << duracao << " " << prioridade << std::endl;
+            controle->criaProcesso(id, cor, ingresso, duracao, prioridade); //Cria processos que serão inseridos no sistema
         }
         arquivo.close();
         return sist;
@@ -71,14 +68,12 @@ Sistema* criaSimulador()
         std::cout << "Erro ao abrir o arquivo" << std::endl;
         return NULL;
     }
-
 }
 
 int main()
 {
-    Sistema* sistema = criaSimulador(); //Cria uma instância de Sistema para a simulação
     Controlador control;
-    control.setSistema(sistema);
+    Sistema* sistema = criaSimulador(&control); //Cria uma instância de Sistema para a simulação
 
     sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador", sf::Style::Titlebar | sf::Style::Close); //Instância de janela SFML
     window.setPosition(sf::Vector2i(0, 150));
@@ -89,8 +84,8 @@ int main()
     float tempoQuantum = 0; //Contador de tempo inteiro para receber dados para cálculo de quantum
     float timerTecla = 0;
     float dt = 0; //Contador de tempo padrão, recebe o tempo armazenado na variável Clock (é o delta Tempo)
-    bool fast = false;
-    sf::Color background(127, 125, 255);
+    bool fast = false; //Define se o sistema está no modo fast-forward
+    sf::Color background(127, 125, 255); //Cor do fundo
 
     sistema->setJanela(&window); //Envia ao Sistema uma referência para a janela onde ele deve desenhar os Processos
 
@@ -131,7 +126,8 @@ int main()
         if (Keyboard::isKeyPressed(Keyboard::Space) && timerTecla > 0.25) //Altera o modo do Sistema de automático para passo a passo e vice-versa
         {
             std::cout << "AOBA\n";
-            sistema->mudaModo();
+            //sistema->mudaModo();
+            control.executar(tempoSimulador); 
             timerTecla = 0;
         }
 
@@ -150,7 +146,7 @@ int main()
                 tempoQuantum = 1; //Envia o tempo a cada 1s para Sistema
                 
                 sistema->executar(tempoSimulador, 1);
-                std::cout << "Tempo global SINISTRO: " << tempoSimulador << std::endl;
+                //std::cout << "Tempo global SINISTRO: " << tempoSimulador << std::endl;
                 tempoSimulador++; //tempoSimulador registra o tempo global do Sistema, portanto não é resetado
                 timer = 0;
                 tempoQuantum = 0;

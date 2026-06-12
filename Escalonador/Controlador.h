@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 #include "Sistema.h"
 #include "Processo.h"
 
@@ -10,6 +11,8 @@ class Controlador
 private:
 	Sistema* sist;
 	std::vector<Processo*> processos;
+	int y;
+	int tempoDecorrido;
 
 public:
 	Controlador();

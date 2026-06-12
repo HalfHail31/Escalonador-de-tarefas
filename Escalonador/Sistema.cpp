@@ -1,7 +1,7 @@
 #include "Sistema.h"
 #include <iostream>
 
-Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(true)
+Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false)
 {
     std::cout << algoritmo << std::endl;
     std::cout << "Ola, sou um sistema operacional de " << CPUs << " processadores e quantum de " << quantum << "s\n";
@@ -30,16 +30,9 @@ Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p
 Sistema::~Sistema()
 {
     int size = (int)processadores.size();
-    int size2 = (int)processos.size();
 
     for (int i = 0; i < size; i++)
-    {
         delete processadores[i];
-    }
-    for (int i = 0; i < size2; i++)
-    {
-        delete processos[i];
-    }
 }
 
 void Sistema::recebeProcesso(Processo* p)
@@ -350,6 +343,10 @@ void Sistema::setQuantum(int q)
 {
     if (q > 0)
         quantum = q;
+
+    int tam = (int)processos.size();
+    for (int i = 0; i < tam; i++)
+        processos[i]->setQuantum(quantum); //Atualiza o valor de quantum dos processos
 }
 
 void Sistema::setProcessadores(int c)
@@ -357,10 +354,20 @@ void Sistema::setProcessadores(int c)
     if (c > 0)
     {
         CPUs = c;
+        CPUsLivres = CPUs;
+
+        int tam = (int)processos.size();
+        for (int i = 0; i < tam; i++)
+        {
+            if (processos[i]->getAtiva()) //Armazena as tarefas ativas para reativá-las após mudar o número de processadores
+                retiraProcessador(processos[i]);
+        }
 
         int size = (int)processadores.size();
         for (int i = 0; i < size; i++)
             delete processadores[i];
+        processadores.clear(); //Remove os ponteiros vazios
+
         
         for (int i = CPUs; i > 0; i--) //Recria processadores
         {
@@ -380,12 +387,29 @@ void Sistema::setProcessadores(int c)
         legenda.setFillColor(sf::Color::Black);
         legenda.setStyle(sf::Text::Bold);
         legenda.setPosition(posUltimaCPU.x - 150, posUltimaCPU.y + 10);
+
+
     }
 }
 
-std::string Sistema::getAlgoritmo()
+const std::string Sistema::getAlgoritmo()
 {
     return algoritmo;
+}
+
+const int Sistema::getNumCPUs()
+{
+    return CPUs;
+}
+
+const int Sistema::getNumCPUsLivres()
+{
+    return CPUsLivres;
+}
+
+const int Sistema::getQuantum()
+{
+    return quantum;
 }
 
 void Sistema::desenhaProcessos()

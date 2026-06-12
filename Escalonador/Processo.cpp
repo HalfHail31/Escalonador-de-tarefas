@@ -262,47 +262,57 @@ void Processo::termina(int tempoDecorrido)
     //std::cout << "terminado" << termino << std::endl;
 }
 
-bool Processo::getAtiva()
+const bool Processo::getAtiva()
 {
     return ativa;
 }
 
-bool Processo::getIniciada()
+const bool Processo::getIniciada()
 {
     return iniciada;
 }
 
-bool Processo::getTerminada()
+const bool Processo::getTerminada()
 {
     return terminada;
 }
 
-int Processo::getPrioridade()
+const int Processo::getPrioridade()
 {
     return prioridade;
 }
 
-int Processo::getTempoRestante()
+const int Processo::getTempoRestante()
 {
     return duracao - tempoExecutado;
 }
 
-int Processo::getIngresso()
+const int Processo::getIngresso()
 {
     return ingresso;
 }
 
-int Processo::getDuracao()
+const bool Processo::getSuspensa()
+{
+    return suspensa;
+}
+
+const int Processo::getTempoComCPU()
+{
+    return tempoComCPU;
+}
+
+const int Processo::getDuracao()
 {
     return duracao;
 }
 
-int Processo::getTermino()
+const int Processo::getTermino()
 {
     return termino;
 }
 
-int Processo::getEstadoQuantum()
+const int Processo::getEstadoQuantum()
 {
     return quantumMax;
 }
@@ -346,15 +356,18 @@ void Processo::setCor(unsigned long int cor)
 
 void Processo::setIngresso(int ing)
 {
-    ingresso = ing;
+    if (ing >= 0)
+        ingresso = ing;
 }
 
 void Processo::setDuracao(int d)
 {
-    duracao = d;
+    if (d > 0)
+        duracao = d;
 }
 
 void Processo::setPrioridade(int p)
 {
-    prioridade = p;
+    if (p > 0)
+        prioridade = p;
 }

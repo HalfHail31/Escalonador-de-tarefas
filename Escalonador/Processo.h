@@ -47,15 +47,19 @@ public:
     void mudaEstado();
     void termina(int tempoDecorrido);
 
-    bool getAtiva();
-    bool getIniciada();
-    bool getTerminada();
-    int getPrioridade();
-    int getTempoRestante();
-    int getIngresso();
-    int getDuracao();
-    int getTermino();
-    int getEstadoQuantum();
+    const bool getAtiva();
+    const bool getIniciada();
+    const bool getTerminada();
+    const int getPrioridade();
+    const int getTempoRestante();
+    const int getIngresso();
+    const int getDuracao();
+    const int getTermino();
+    const int getEstadoQuantum();
+    const bool getSuspensa();
+    const int getTempoComCPU();
+
+
     void setQuantum(int q);
     void resetaQuantum();
     void recebeCPU(int indice);

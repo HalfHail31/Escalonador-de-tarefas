@@ -44,11 +44,14 @@ public:
     void verificaEscalonamento(Processo* p, int tempoDecorrido);
     bool desempate(Processo* atual, Processo* candidato);
 
-    void setAlgoritmo(std::string alg);///
-    void setQuantum(int q); //////////////Funções para editar o sistema
-    void setProcessadores(int c); ////////
+    void setAlgoritmo(std::string alg);/////////////////////////////////////////
+    void setQuantum(int q); ////////////////Para editar o sistema///////////////
+    void setProcessadores(int c); //////////////////////////////////////////////
 
-    std::string getAlgoritmo();
+    const std::string getAlgoritmo(); //////////////////////////////////////////
+    const int getNumCPUs(); ////////////////////////////////////////////////////
+    const int getNumCPUsLivres(); /////////Para conferir dados do sistema///////
+    const int getQuantum(); ////////////////////////////////////////////////////
 
     void desenhaProcessos();
     void desenhaProcessadores();
