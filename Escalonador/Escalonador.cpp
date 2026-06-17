@@ -126,8 +126,8 @@ int main()
         if (Keyboard::isKeyPressed(Keyboard::Space) && timerTecla > 0.25) //Altera o modo do Sistema de automático para passo a passo e vice-versa
         {
             std::cout << "AOBA\n";
-            //sistema->mudaModo();
-            control.executar(tempoSimulador); 
+            sistema->mudaModo();
+            //control.executar(tempoSimulador); 
             timerTecla = 0;
         }
 
@@ -140,13 +140,11 @@ int main()
         window.clear(background); //Limpa a janela
         if (timer >= tick) //Se passou um tick, o sistema executa
         {
-            //std::cout << "Tempo global SINIINI: " << tempoSimulador << std::endl;
             if (!sistema->getPorEtapas()) //A cada segundo decorrido (modo automático)
             {
                 tempoQuantum = 1; //Envia o tempo a cada 1s para Sistema
                 
                 sistema->executar(tempoSimulador, 1);
-                //std::cout << "Tempo global SINISTRO: " << tempoSimulador << std::endl;
                 tempoSimulador++; //tempoSimulador registra o tempo global do Sistema, portanto não é resetado
                 timer = 0;
                 tempoQuantum = 0;
@@ -158,6 +156,7 @@ int main()
                 {
                     if (Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right))
                     {
+                        //control.exibeInformacoes();
                         if (tempoSimulador > 0)
                             tempoSimulador--;
                         tempoQuantum = 1;
@@ -168,10 +167,10 @@ int main()
 
                     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left))
                     {
-                        tempoSimulador++;
-                        std::cout << "Tempo global: " << tempoSimulador << std::endl;
                         tempoQuantum = 1;
                         sistema->executar(tempoSimulador, 1);
+                        tempoSimulador++;
+                        std::cout << "Tempo global: " << tempoSimulador << std::endl;
                         timer = 0;
                     }
                 }

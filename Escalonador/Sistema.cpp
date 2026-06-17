@@ -1,7 +1,7 @@
 #include "Sistema.h"
 #include <iostream>
 
-Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false)
+Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(true)
 {
     std::cout << algoritmo << std::endl;
     std::cout << "Ola, sou um sistema operacional de " << CPUs << " processadores e quantum de " << quantum << "s\n";
@@ -235,21 +235,22 @@ void Sistema::executar(int tempoDecorrido, int dir)
     }
 
     //Se por etapas, utiliza a própria função
-    //if (porEtapas)
-    //    simulaEtapas(tempoDecorrido);
-    //else
-    //{
-    //    for (int i = 0; i < tam; i++)
-    //        if (!processos[i]->getTerminada()) //Não precisa mais executar uma tarefa que já terminou
-    //            processos[i]->executar(tempoDecorrido);
-    //}
-
+    if (porEtapas)
+        simulaEtapas(tempoDecorrido);
+    else
+    {
+        for (int i = 0; i < tam; i++)
+            if (!processos[i]->getTerminada()) //Não precisa mais executar uma tarefa que já terminou
+                processos[i]->executar(tempoDecorrido);
+    }/*
     for (int i = 0; i < tam; i++)
     {
         if (porEtapas)
         {
             if (dir == -1)
+            {
                 processos[i]->retroceder(tempoDecorrido);
+            }
             else if (!processos[i]->getTerminada()) //Uma tarefa terminada não precisa executar
                 processos[i]->executar(tempoDecorrido);
         }
@@ -258,7 +259,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
             if (!processos[i]->getTerminada())
                 processos[i]->executar(tempoDecorrido);
         }
-    }
+    }*/
 }
 
 void Sistema::verificaEscalonamento(Processo* p, int tempoDecorrido) //Verifica se é necessário fazer um escalonamento
@@ -448,9 +449,21 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Função para modo Por Etapas
         {
             processos[i]->executarPassos(tempoDecorrido, -1);
         }
+        // Reconstrói visual dos processadores a partir dos índices restaurados no histórico
+        CPUsLivres = CPUs;
+        // marca todos processadores como livres
+        for (int i = 0; i < CPUs; i++)
+            processadores[i]->setFillColor(sf::Color::Green);
+
+        // Marcar processadores ocupados conforme indiceCPU de cada processo
         for (int i = 0; i < tam; i++)
         {
-            verificaEscalonamento(processos[i], tempoDecorrido);
+            int idx = processos[i]->getIndiceCPU();
+            if (idx != -1 && idx >= 0 && idx < (int)processadores.size())
+            {
+                processadores[idx]->setFillColor(sf::Color::Red);
+                CPUsLivres--;
+            }
         }
     }
 
@@ -464,8 +477,68 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Função para modo Por Etapas
         {
             verificaEscalonamento(processos[i], tempoDecorrido);
         }
+        //for (int i = 0; i < tam; i++)
+        //{
+        //    if (processos[i]->getAtiva())
+        //        retiraProcessador(processos[i]);
+        //}
+        
     }
 }
+
+/*void Sistema::simulaEtapas(int tempoDecorrido) //Função para modo Por Etapas
+{
+    int tam = processos.size();
+    int idx;
+
+    if (Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right)) //Esquerda retrocede
+    {
+        bool left = Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right);
+        bool right = Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left);
+
+        if (!left && !right)
+            return;
+
+        // Executa um passo (avança ou retrocede) para todos os processos
+        for (int i = 0; i < tam; i++)
+        {
+            processos[i]->executarPassos(tempoDecorrido, -1);
+            processos[i]->executarPassos(tempoDecorrido, left ? -1 : 1);
+        }
+        for (int i = 0; i < tam; i++)
+        {
+            verificaEscalonamento(processos[i], tempoDecorrido);
+        }
+    }
+
+    if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left)) //Direita avança
+    {
+        // Após o passo, liberamos visualmente todas as CPUs e removemos índices antigos
+        // para que o escalonador possa recalcular a distribuição corretamente.
+        for (int i = 0; i < tam; i++)
+        {
+            processos[i]->executarPassos(tempoDecorrido, 1);
+        }
+        for (int i = 0; i < tam; i++) {
+            idx = processos[i]->getIndiceCPU();
+            if (idx != -1 && idx < (int)processadores.size())
+            {
+                verificaEscalonamento(processos[i], tempoDecorrido);
+                processadores[idx]->setFillColor(sf::Color::Green);
+                processos[i]->removeCPU();
+                CPUsLivres++;
+            }
+            // Reseta contadores de quantum para evitar estados obsoletos
+            processos[i]->resetaQuantum();
+        }
+    }
+
+    // Força o escalonamento no instante atual
+    if (algoritmo == "priop")
+        executarPRIOp(tempoDecorrido);
+    else if (algoritmo == "srtf")
+        executarSRTF(tempoDecorrido);
+}*/
 
 std::vector<Processo*> Sistema::getProcessos()
 {

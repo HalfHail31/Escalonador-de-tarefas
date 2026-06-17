@@ -5,6 +5,19 @@
 
 using namespace::sf;
 
+struct Estado
+{
+    bool ativa;
+    bool terminada;
+    bool suspensa;
+    bool iniciada;
+    int tempoExecutado;
+    int tempoComCPU;
+    int termino;
+    int indiceCPU;
+    int posX;
+};
+
 class Processo
 {
 private:
@@ -33,6 +46,7 @@ private:
     int contaPassos; //Substitui os segundos no modo passo a passo
 
     std::vector<RectangleShape*> tamanho; //Guarda retângulos para o processo ser exibido maior a cada avanço no tempo
+    std::vector<Estado> historico; //Registra o histórico de estados do processo
 
 public:
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
@@ -44,6 +58,8 @@ public:
     void setCor(RectangleShape* rect);
     void prosseguir(int tempoDecorrido);
     void retroceder(int tempoDecorrido);
+    void salvarEstado();
+    void recuperaEstado();
     void mudaEstado();
     void termina(int tempoDecorrido);
 
@@ -58,7 +74,6 @@ public:
     const int getEstadoQuantum();
     const bool getSuspensa();
     const int getTempoComCPU();
-
 
     void setQuantum(int q);
     void resetaQuantum();
