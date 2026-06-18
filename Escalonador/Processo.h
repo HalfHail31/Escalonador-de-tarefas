@@ -86,4 +86,5 @@ public:
     void setIngresso(int ing);
     void setDuracao(int d);
     void setPrioridade(int p);
+    void cancelaTermino();
 };

@@ -60,7 +60,7 @@ void Processo::executar(int tempoDecorrido)
 	else
 		resetaQuantum();
 
-	if (tempoComCPU == quantum)
+	if (tempoComCPU >= quantum)
 		quantumMax = true;
 
 	if (ativa && !terminada)
@@ -89,6 +89,14 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 	{
 		salvarEstado();
 		prosseguir(tempoDecorrido);
+
+		if (ativa)
+			tempoComCPU++;
+		else
+			resetaQuantum();
+
+		if (tempoComCPU >= quantum)
+			quantumMax = true;
 
 		if (ativa)
 			tempoExecutado++;
@@ -319,4 +327,9 @@ void Processo::setPrioridade(int p)
 {
 	if (p > 0)
 		prioridade = p;
+}
+
+void Processo::cancelaTermino()
+{
+	terminada = false;
 }

@@ -61,6 +61,7 @@ void Controlador::editaProcesso(std::string id, unsigned long int c, int ing, in
 			
 			processos[i]->setDuracao(d);
 			processos[i]->setPrioridade(p);
+			processos[i]->cancelaTermino();
 			break;
 		}
 	}

@@ -70,9 +70,11 @@ Sistema* criaSimulador(Controlador* controle)
     }
 }
 
+int tempoSimulador = 0; //Contador de tempo inteiro para evitar erros de cálculo, atua como um contador de iterações
+
 int main()
 {
-    Controlador control;
+    Controlador control; //Controle de tasks
     Sistema* sistema = criaSimulador(&control); //Cria uma instância de Sistema para a simulação
 
     sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador", sf::Style::Titlebar | sf::Style::Close); //Instância de janela SFML
@@ -80,7 +82,6 @@ int main()
 
     sf::Clock clock; //Variável de registro de tempo da SFML
     float timer = 0; //Contador de tempo em float para chamada executar do sistema (a cada 1s)
-    int tempoSimulador = 0; //Contador de tempo inteiro para evitar erros de cálculo, atua como um contador de iterações
     float tempoQuantum = 0; //Contador de tempo inteiro para receber dados para cálculo de quantum
     float timerTecla = 0;
     float dt = 0; //Contador de tempo padrão, recebe o tempo armazenado na variável Clock (é o delta Tempo)
@@ -127,7 +128,7 @@ int main()
         {
             std::cout << "AOBA\n";
             sistema->mudaModo();
-            //control.executar(tempoSimulador); 
+            control.executar(tempoSimulador); 
             timerTecla = 0;
         }
 
@@ -142,12 +143,9 @@ int main()
         {
             if (!sistema->getPorEtapas()) //A cada segundo decorrido (modo automático)
             {
-                tempoQuantum = 1; //Envia o tempo a cada 1s para Sistema
-                
                 sistema->executar(tempoSimulador, 1);
                 tempoSimulador++; //tempoSimulador registra o tempo global do Sistema, portanto não é resetado
                 timer = 0;
-                tempoQuantum = 0;
             }
 
             else if (sistema->getPorEtapas())
@@ -156,10 +154,8 @@ int main()
                 {
                     if (Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right))
                     {
-                        //control.exibeInformacoes();
                         if (tempoSimulador > 0)
                             tempoSimulador--;
-                        tempoQuantum = 1;
                         sistema->executar(tempoSimulador, -1);
                         timer = 0;
                         std::cout << "Tempo global: " << tempoSimulador << std::endl;
@@ -167,11 +163,10 @@ int main()
 
                     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left))
                     {
-                        tempoQuantum = 1;
                         sistema->executar(tempoSimulador, 1);
                         tempoSimulador++;
-                        std::cout << "Tempo global: " << tempoSimulador << std::endl;
                         timer = 0;
+                        std::cout << "Tempo global: " << tempoSimulador << std::endl;
                     }
                 }
             }
