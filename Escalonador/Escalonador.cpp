@@ -9,11 +9,11 @@
 Sistema* criaSimulador(Controlador* controle)
 {
     std::string sistema; //Linha dedicada à leitura dos dados do sistema
-    std::string processo; //Linha/s dedicada/s à leitura dos dados do/s processo/s
+    std::string processo; //Linhas dedicadas à leitura dos dados dos processos
     
-    std::string arq = "Processo.txt";
-    //std::cout << "Insira o nome do arquivo a ser lido: " << std::endl << ">";
-    //std::cin >> arq;
+    std::string arq;// = "Processo.txt";
+    std::cout << "Insira o nome do arquivo a ser lido" << std::endl << "Exemplo: arquivo.txt" << std::endl << ">";
+    std::cin >> arq;
     
     std::ifstream arquivo(arq); //Nome padrão da entrada
     int y = 0; //Contador de linhas para instanciar processos em valores y distintos da tela
@@ -66,7 +66,7 @@ Sistema* criaSimulador(Controlador* controle)
     else
     {
         std::cout << "Erro ao abrir o arquivo" << std::endl;
-        return NULL;
+        return criaSimulador(controle); //Chamada recursiva em caso de erro na leitura
     }
 }
 
@@ -101,7 +101,7 @@ int main()
             tick = 0.1;
 
         if (sistema->getPorEtapas())
-            tick = 0.5;
+            tick = 0.1;
 
         sf::Event event;
 
@@ -126,14 +126,20 @@ int main()
 
         if (Keyboard::isKeyPressed(Keyboard::Space) && timerTecla > 0.25) //Altera o modo do Sistema de automático para passo a passo e vice-versa
         {
-            std::cout << "AOBA\n";
             sistema->mudaModo();
-            control.executar(tempoSimulador); 
             timerTecla = 0;
         }
-
-        if (Keyboard::isKeyPressed(Keyboard::Down) && timerTecla > 0.15) //Ativa ou desativa o modo fast-forward
+        if (Keyboard::isKeyPressed(Keyboard::LControl) || Keyboard::isKeyPressed(Keyboard::RControl) && timerTecla > 0.25) //Ativa o controle de tarefas
         {
+            control.executar(tempoSimulador);
+            timerTecla = 0;
+        }
+        if (Keyboard::isKeyPressed(Keyboard::Up) && timerTecla > 0.25) //Ativa ou desativa o modo fast-forward
+        {
+            if (fast)
+                std::cout << "Modo por fast-forward desativado!" << std::endl;
+            else
+                std::cout << "Modo fast-forward ativado!" << std::endl;
             fast = !fast;
             timerTecla = 0;
         }

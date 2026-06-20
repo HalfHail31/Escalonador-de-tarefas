@@ -1,10 +1,10 @@
 #include "Processo.h"
 #include <iostream>
 
-#define TAM 15
+#define TAM 10
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y): id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p),
-ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1)
+ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 2;
@@ -55,6 +55,13 @@ void Processo::executar(int tempoDecorrido)
 	if (!iniciada)
 		iniciada = true;
 
+	// Salvar estado antes de aplicar avanços para que o histórico seja
+	// consistente com o modo passo-a-passo (executarPassos salva antes também).
+	salvarEstado();
+
+	// Desenhar primeiro o avanço temporal (consistente com executarPassos)
+	prosseguir(tempoDecorrido);
+
 	if (ativa)
 		tempoComCPU++;
 	else
@@ -66,16 +73,34 @@ void Processo::executar(int tempoDecorrido)
 	if (ativa && !terminada)
 		tempoExecutado++;
 
-	prosseguir(tempoDecorrido);
-
 	if (tempoExecutado >= duracao && !terminada)
 		termina(tempoDecorrido);
 }
 
 void Processo::executarPassos(int tempoDecorrido, int dir)
 {
-	if (tempoDecorrido < ingresso)
+	if (tempoDecorrido < ingresso) //Correção de alguns problemas com lixo de memória ao retroceder até 0
+	{
+		iniciada = false;
+		ativa = false;
+		terminada = false;
+		suspensa = false;
+		tempoExecutado = 0;
+		tempoComCPU = 0;
+		termino = -1;
+		indiceCPU = -1;
+		quantumMax = false;
+		int sz = (int)tamanho.size();
+		for (int i = 0; i < sz; i++)
+			delete tamanho[i];
+		tamanho.clear();
+		historico.clear();
+
+		posX = ingresso * TAM;
+		legenda.setFillColor(sf::Color::White);
 		return;
+	}
+
 	if (terminada && dir == 1)
 		return;
 
@@ -84,7 +109,6 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 
 	if (dir == -1)
 		retroceder(tempoDecorrido);
-		
 	else if (dir == 1)
 	{
 		salvarEstado();
@@ -153,6 +177,7 @@ void Processo::salvarEstado()
 	e.tempoComCPU = tempoComCPU;
 	e.termino = termino;
 	e.indiceCPU = indiceCPU;
+	e.quantumMax = quantumMax;
 	e.posX = posX;
 
 	historico.push_back(e);
@@ -174,6 +199,7 @@ void Processo::recuperaEstado()
 	tempoComCPU = e.tempoComCPU;
 	termino = e.termino;
 	indiceCPU = e.indiceCPU;
+	quantumMax = e.quantumMax;
 	posX = e.posX;
 }
 
@@ -191,9 +217,9 @@ void Processo::retroceder(int tempoDecorrido)
 
 	recuperaEstado();
 
-	if (terminada)
-		legenda.setFillColor(sf::Color::Blue);
-	else if (suspensa)
+	//if (terminada)
+		//legenda.setFillColor(sf::Color::Blue);
+	if (suspensa)
 		legenda.setFillColor(sf::Color::Black);
 	else if (ativa)
 		legenda.setFillColor(cor);
@@ -213,6 +239,7 @@ void Processo::termina(int tempoDecorrido)
 {
 	terminada = true;
 	termino = tempoDecorrido;
+	quantumMax = false;
 }
 
 const bool Processo::getAtiva()
@@ -285,12 +312,12 @@ void Processo::recebeCPU(int indice)
 {
 	indiceCPU = indice;
 
-	std::cout << "CPU indice " << indiceCPU << " cedida ao processo " << id << std::endl;
+	//std::cout << "CPU indice " << indiceCPU << " cedida ao processo " << id << std::endl;
 }
 
 void Processo::removeCPU()
 {
-	std::cout << "CPU indice " << indiceCPU << " retirada do processo " << id << std::endl;
+	//std::cout << "CPU indice " << indiceCPU << " retirada do processo " << id << std::endl;
 
 	indiceCPU = -1;
 }

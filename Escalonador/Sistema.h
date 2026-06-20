@@ -6,9 +6,7 @@
 
 #include <string>
 
-
-
-#define ALTURA_TELA 600
+#define ALTURA_TELA 800
 #define LARGURA_TELA 1300
 #define RAIO_PROCESSADOR 20
 
@@ -41,7 +39,7 @@ public:
     void executarPRIOp(int tempoDecorrido);
     void executarSRTF(int tempoDecorrido);
     void executar(int tempoDecorrido, int dir);
-    void verificaEscalonamento(Processo* p, int tempoDecorrido);
+    void verificaEscalonamento(int tempoDecorrido);
     bool desempate(Processo* atual, Processo* candidato);
 
     void setAlgoritmo(std::string alg);/////////////////////////////////////////

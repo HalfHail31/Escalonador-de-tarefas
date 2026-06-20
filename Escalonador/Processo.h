@@ -15,6 +15,7 @@ struct Estado
     int tempoComCPU;
     int termino;
     int indiceCPU;
+    bool quantumMax;
     int posX;
 };
 

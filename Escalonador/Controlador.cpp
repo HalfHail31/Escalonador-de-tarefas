@@ -25,13 +25,12 @@ void Controlador::setProcessos()
 
 void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p)
 {
-	std::cout << "TEMPO: " << tempoDecorrido << " INGRESSO: " << ing << "\n";
 	if (tempoDecorrido > ing)
 	{
 		std::cout << "Nao da para inserir um processo em um tempo ja decorrido" << std::endl;
 		return;
 	}
-	std::cout << "ID: " << id << " COR: " << c << " INGRESSO " << ing << " DURACAO " << d << " PRIORIDADE " << p << "\n";
+	//std::cout << "ID: " << id << " COR: " << c << " INGRESSO " << ing << " DURACAO " << d << " PRIORIDADE " << p << "\n";
 	Processo* processo = new Processo(id, c, ing, d, p, y); //Instancia um processo para esta iteração, y define sua altura y na tela
 	
 	y++; //Incrementa para o próximo processo
