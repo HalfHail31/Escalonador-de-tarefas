@@ -1,4 +1,4 @@
-#include "Sistema.h"
+ï»¿#include "Sistema.h"
 #include "Controlador.h"
 #include <iostream>
 #include <fstream>
@@ -8,28 +8,28 @@
 
 Sistema* criaSimulador(Controlador* controle)
 {
-    std::string sistema; //Linha dedicada à leitura dos dados do sistema
-    std::string processo; //Linhas dedicadas à leitura dos dados dos processos
-    
+    std::string sistema; //Linha dedicada ï¿½ leitura dos dados do sistema
+    std::string processo; //Linhas dedicadas ï¿½ leitura dos dados dos processos
+
     std::string arq;// = "Processo.txt";
     std::cout << "Insira o nome do arquivo a ser lido" << std::endl << "Exemplo: arquivo.txt" << std::endl << ">";
     std::cin >> arq;
-    
-    std::ifstream arquivo(arq); //Nome padrão da entrada
+
+    std::ifstream arquivo(arq); //Nome padrï¿½o da entrada
     int y = 0; //Contador de linhas para instanciar processos em valores y distintos da tela
 
     if (arquivo.is_open())
     {
-        std::getline(arquivo, sistema); //Armazena o conteúdo da primeira linha em sistema
+        std::getline(arquivo, sistema); //Armazena o conteï¿½do da primeira linha em sistema
         std::stringstream ss(sistema); //stringstream, serve para ler strings de arquivos e converter para diferentes tipos
 
-        int quantum, cpus; //Variáveis para instanciar Sistema
-        char sep; //Variável para servir de filtro e ignorar o caractere que não é número, no caso, o ";"
+        int quantum, cpus; //Variï¿½veis para instanciar Sistema
+        char sep; //Variï¿½vel para servir de filtro e ignorar o caractere que nï¿½o ï¿½ nï¿½mero, no caso, o ";"
         std::string algoritmo; // Algoritmo a ser usado pelo sistema
 
         std::getline(ss, algoritmo, ';'); //Anota a string para escolher o algoritmo
 
-        // Converte para minúsculo
+        // Converte para minï¿½sculo
         std::transform(
             algoritmo.begin(),
             algoritmo.end(),
@@ -37,8 +37,8 @@ Sistema* criaSimulador(Controlador* controle)
             ::tolower
         );
 
-        ss >> quantum >> sep; //Anota números antes de ; em quantum
-        ss >> cpus >> sep; //Anota números antes de ; em cpus
+        ss >> quantum >> sep; //Anota nï¿½meros antes de ; em quantum
+        ss >> cpus >> sep; //Anota nï¿½meros antes de ; em cpus
         Sistema* sist = new Sistema(algoritmo, quantum, cpus); //Instancia o sistema com os valores recolhidos
         controle->setSistema(sist); //Para controlar e consultar os dados do sistema
 
@@ -46,19 +46,19 @@ Sistema* criaSimulador(Controlador* controle)
         {
             std::stringstream ss(processo);
             std::string id;
-            int ingresso, duracao, prioridade; //Variáveis para instanciar Processos
+            int ingresso, duracao, prioridade; //Variï¿½veis para instanciar Processos
             unsigned long int cor; //Idem
-            char sep; //Variável para servir de filtro e ignorar o caractere que não é número, no caso, o ";"
+            char sep; //Variï¿½vel para servir de filtro e ignorar o caractere que nï¿½o ï¿½ nï¿½mero, no caso, o ";"
 
             std::getline(ss, id, ';');
 
             //ss >> id >> sep;
-            ss >> std::hex >> cor >> std::dec >> sep; //Aceita valor em hexadecimal, letras passam a serem vistas como números para sep não parar em uma letra
+            ss >> std::hex >> cor >> std::dec >> sep; //Aceita valor em hexadecimal, letras passam a serem vistas como nï¿½meros para sep nï¿½o parar em uma letra
             ss >> ingresso >> sep;
             ss >> duracao >> sep;
             ss >> prioridade >> sep;
 
-            controle->criaProcesso(id, cor, ingresso, duracao, prioridade); //Cria processos que serão inseridos no sistema
+            controle->criaProcesso(id, cor, ingresso, duracao, prioridade); //Cria processos que serï¿½o inseridos no sistema
         }
         arquivo.close();
         return sist;
@@ -70,30 +70,30 @@ Sistema* criaSimulador(Controlador* controle)
     }
 }
 
-int tempoSimulador = 0; //Contador de tempo inteiro para evitar erros de cálculo, atua como um contador de iterações
+int tempoSimulador = 0; //Contador de tempo inteiro para evitar erros de cï¿½lculo, atua como um contador de iteraï¿½ï¿½es
 
 int main()
 {
     Controlador control; //Controle de tasks
-    Sistema* sistema = criaSimulador(&control); //Cria uma instância de Sistema para a simulação
+    Sistema* sistema = criaSimulador(&control); //Cria uma instï¿½ncia de Sistema para a simulaï¿½ï¿½o
 
-    sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador", sf::Style::Titlebar | sf::Style::Close); //Instância de janela SFML
+    sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador", sf::Style::Titlebar | sf::Style::Close); //Instï¿½ncia de janela SFML
     window.setPosition(sf::Vector2i(0, 150));
 
-    sf::Clock clock; //Variável de registro de tempo da SFML
+    sf::Clock clock; //Variï¿½vel de registro de tempo da SFML
     float timer = 0; //Contador de tempo em float para chamada executar do sistema (a cada 1s)
-    float tempoQuantum = 0; //Contador de tempo inteiro para receber dados para cálculo de quantum
+    float tempoQuantum = 0; //Contador de tempo inteiro para receber dados para cï¿½lculo de quantum
     float timerTecla = 0;
-    float dt = 0; //Contador de tempo padrão, recebe o tempo armazenado na variável Clock (é o delta Tempo)
-    bool fast = false; //Define se o sistema está no modo fast-forward
+    float dt = 0; //Contador de tempo padrï¿½o, recebe o tempo armazenado na variï¿½vel Clock (ï¿½ o delta Tempo)
+    bool fast = false; //Define se o sistema estï¿½ no modo fast-forward
     sf::Color background(127, 125, 255); //Cor do fundo
 
-    sistema->setJanela(&window); //Envia ao Sistema uma referência para a janela onde ele deve desenhar os Processos
+    sistema->setJanela(&window); //Envia ao Sistema uma referï¿½ncia para a janela onde ele deve desenhar os Processos
 
     while (window.isOpen())
     {
         dt = clock.restart().asSeconds(); //Recebe e armazena tempo decorrido em segundos
-        timer += dt; //Adiciona para o timer a cada iteração
+        timer += dt; //Adiciona para o timer a cada iteraï¿½ï¿½o
         timerTecla += dt;
         float tick = 1;
 
@@ -105,7 +105,7 @@ int main()
 
         sf::Event event;
 
-        while (window.pollEvent(event)) //Formato de evento padrão da SFML, permite que a janela seja fechada
+        while (window.pollEvent(event)) //Formato de evento padrï¿½o da SFML, permite que a janela seja fechada
         {
             if (event.type == sf::Event::Closed)
             {
@@ -124,7 +124,7 @@ int main()
             }
         }
 
-        if (Keyboard::isKeyPressed(Keyboard::Space) && timerTecla > 0.25) //Altera o modo do Sistema de automático para passo a passo e vice-versa
+        if (Keyboard::isKeyPressed(Keyboard::Space) && timerTecla > 0.25) //Altera o modo do Sistema de automï¿½tico para passo a passo e vice-versa
         {
             sistema->mudaModo();
             timerTecla = 0;
@@ -147,10 +147,10 @@ int main()
         window.clear(background); //Limpa a janela
         if (timer >= tick) //Se passou um tick, o sistema executa
         {
-            if (!sistema->getPorEtapas()) //A cada segundo decorrido (modo automático)
+            if (!sistema->getPorEtapas()) //A cada segundo decorrido (modo automï¿½tico)
             {
                 sistema->executar(tempoSimulador, 1);
-                tempoSimulador++; //tempoSimulador registra o tempo global do Sistema, portanto não é resetado
+                tempoSimulador++; //tempoSimulador registra o tempo global do Sistema, portanto nï¿½o ï¿½ resetado
                 timer = 0;
             }
 
@@ -180,7 +180,7 @@ int main()
 
         sistema->desenhaProcessos(); //Desenha na janela
         sistema->desenhaProcessadores();
-        window.display(); //Exibe o conteúdo desenhado na janela
+        window.display(); //Exibe o conteï¿½do desenhado na janela
     }
     return 0;
 }

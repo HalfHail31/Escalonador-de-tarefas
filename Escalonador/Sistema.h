@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "Processo.h"
 
@@ -13,13 +13,13 @@
 class Sistema
 {
 private:
-    std::string algoritmo; //Algoritmo definido pelo usuário
-    int quantum; //Quantum definido pelo usuário
-    int CPUs; //Número de processadores definido pelo usuário
-    int CPUsLivres; //Número de processadores livres
+    std::string algoritmo; //Algoritmo definido pelo usuï¿½rio
+    int quantum; //Quantum definido pelo usuï¿½rio
+    int CPUs; //Nï¿½mero de processadores definido pelo usuï¿½rio
+    int CPUsLivres; //Nï¿½mero de processadores livres
     float tempo; //Tempo decorrido para o quantum
-    bool porEtapas; //Define se está no modo Por Etapas
-    sf::RenderWindow* janela; //Janela de exibição
+    bool porEtapas; //Define se estï¿½ no modo Por Etapas
+    sf::RenderWindow* janela; //Janela de exibiï¿½ï¿½o
     sf::Text legenda; //Legenda para os processadores
     sf::Font fonte; //Fonte para a legenda
     std::vector<Processo*> processos; //Lista de processos

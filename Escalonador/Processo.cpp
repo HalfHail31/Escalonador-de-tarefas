@@ -1,9 +1,9 @@
-#include "Processo.h"
+﻿#include "Processo.h"
 #include <iostream>
 
 #define TAM 10
 
-Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y): id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p),
+Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), prioridadeD(p),
 ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
@@ -179,6 +179,8 @@ void Processo::salvarEstado()
 	e.indiceCPU = indiceCPU;
 	e.quantumMax = quantumMax;
 	e.posX = posX;
+	e.prioridadeD = prioridadeD;
+	e.tempoOcioso = tempoOcioso;
 
 	historico.push_back(e);
 }
@@ -201,6 +203,8 @@ void Processo::recuperaEstado()
 	indiceCPU = e.indiceCPU;
 	quantumMax = e.quantumMax;
 	posX = e.posX;
+	prioridadeD = e.prioridadeD;
+	tempoOcioso = e.tempoOcioso;
 }
 
 void Processo::retroceder(int tempoDecorrido)
@@ -260,6 +264,11 @@ const bool Processo::getTerminada()
 const int Processo::getPrioridade()
 {
 	return prioridade;
+}
+
+const int Processo::getPrioridadeD()
+{
+	return prioridadeD;
 }
 
 const int Processo::getTempoRestante()
@@ -327,6 +336,45 @@ int Processo::getIndiceCPU()
 	return indiceCPU;
 }
 
+void Processo::incrementaTempoOcioso()
+{
+	tempoOcioso++;
+	if (tempoOcioso >= quantum)
+	{
+		int antiga = prioridadeD;
+
+		prioridadeD++;
+		tempoOcioso = 0;
+
+		std::cout
+			<< "[AGING] Processo "
+			<< id
+			<< " prioridade "
+			<< antiga
+			<< " -> "
+			<< prioridadeD
+			<< std::endl;
+	}
+}
+
+void Processo::resetaEnvelhecimento()
+{
+	if (prioridadeD != prioridade)
+	{
+		std::cout
+			<< "[AGING] Processo "
+			<< id
+			<< " prioridade restaurada "
+			<< prioridadeD
+			<< " -> "
+			<< prioridade
+			<< std::endl;
+	}
+
+	prioridadeD = prioridade;
+	tempoOcioso = 0;
+}
+
 std::string Processo::getId()
 {
 	return id;
@@ -352,8 +400,10 @@ void Processo::setDuracao(int d)
 
 void Processo::setPrioridade(int p)
 {
-	if (p > 0)
+	if (p > 0) {
 		prioridade = p;
+		prioridadeD = p;
+	}
 }
 
 void Processo::cancelaTermino()

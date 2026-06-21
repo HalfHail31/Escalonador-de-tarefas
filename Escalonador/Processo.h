@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
@@ -17,37 +17,40 @@ struct Estado
     int indiceCPU;
     bool quantumMax;
     int posX;
+    int prioridadeD;
+    int tempoOcioso;
 };
 
 class Processo
 {
 private:
-    std::string id; //Identificador definido pelo usuário
-    sf::Color cor; //Cor definida pelo usuário
+    std::string id; //Identificador definido pelo usuï¿½rio
+    sf::Color cor; //Cor definida pelo usuï¿½rio
     sf::Text legenda; //Legenda dos processos
     sf::Font fonte; //Fonte para a legenda
-    int ingresso; //Ingresso definido pelo usuário
-    int duracao; //Duração definida pelo usuário
-    int quantum; //Tempo de duração de um quantum
-    int termino; //Tempo em que a tarefa terminou sua execução
+    int ingresso; //Ingresso definido pelo usuï¿½rio
+    int duracao; //Duraï¿½ï¿½o definida pelo usuï¿½rio
+    int quantum; //Tempo de duraï¿½ï¿½o de um quantum
+    int termino; //Tempo em que a tarefa terminou sua execuï¿½ï¿½o
     bool quantumMax; //A tarefa com essa flag ativa pode ser mudada em escalonamentos que consideram quantum
-    int prioridade; //Prioridade definida pelo usuário
-    int indiceCPU; //Índice da CPU recebida para executar
-    int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
-    int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de iterações da função criaSimulador()
-    bool ativa; //Define se o processo está executando
-    bool terminada; //Define se o processo já terminou sua execução
-    bool iniciada; //Define se o processo já iniciou, isto é, ingressou no Sistema
-    bool suspensa; ///Define se o processo está suspenso
-    int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela já terminou sua execução
+    int prioridade; //Prioridade definida pelo usuï¿½rio
+	int prioridadeD;//Prioridade que pode ser alterada por envelhecimento
+    int indiceCPU; //ï¿½ndice da CPU recebida para executar
+    int posX; //Posiï¿½ï¿½o em x para o processo ser desenhado, calculado com base em ingresso
+    int posY; //Posiï¿½ï¿½o em y para o processo ser desenhado, calculada a partir da quantidade de iteraï¿½ï¿½es da funï¿½ï¿½o criaSimulador()
+    bool ativa; //Define se o processo estï¿½ executando
+    bool terminada; //Define se o processo jï¿½ terminou sua execuï¿½ï¿½o
+    bool iniciada; //Define se o processo jï¿½ iniciou, isto ï¿½, ingressou no Sistema
+    bool suspensa; ///Define se o processo estï¿½ suspenso
+    int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela jï¿½ terminou sua execuï¿½ï¿½o
     int tempoComCPU; //Para contar o tempo para a passagem do quantum
     int tempoOcioso; //Para processos que ficarem muito tempo ociosos possam aumentar temporariamente sua prioridade
 
-    float timerPasso; //Pequeno delay exclusivo da execução passo a passo
+    float timerPasso; //Pequeno delay exclusivo da execuï¿½ï¿½o passo a passo
     int contaPassos; //Substitui os segundos no modo passo a passo
 
-    std::vector<RectangleShape*> tamanho; //Guarda retângulos para o processo ser exibido maior a cada avanço no tempo
-    std::vector<Estado> historico; //Registra o histórico de estados do processo
+    std::vector<RectangleShape*> tamanho; //Guarda retï¿½ngulos para o processo ser exibido maior a cada avanï¿½o no tempo
+    std::vector<Estado> historico; //Registra o histï¿½rico de estados do processo
 
 public:
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
@@ -68,6 +71,7 @@ public:
     const bool getIniciada();
     const bool getTerminada();
     const int getPrioridade();
+	const int getPrioridadeD();
     const int getTempoRestante();
     const int getIngresso();
     const int getDuracao();
@@ -81,8 +85,10 @@ public:
     void recebeCPU(int indice);
     void removeCPU();
     int getIndiceCPU();
+    void incrementaTempoOcioso();
+    void resetaEnvelhecimento();
 
-    std::string getId(); //Funções para editar uma tarefa
+    std::string getId(); //Funï¿½ï¿½es para editar uma tarefa
     void setCor(unsigned long int cor);
     void setIngresso(int ing);
     void setDuracao(int d);

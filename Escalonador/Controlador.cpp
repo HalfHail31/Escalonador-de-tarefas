@@ -1,6 +1,6 @@
 #include "Controlador.h"
 
-Controlador::Controlador(): sist(NULL), y(0), tempoDecorrido(0)
+Controlador::Controlador() : sist(NULL), y(0), tempoDecorrido(0)
 {
 }
 
@@ -31,13 +31,13 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 		return;
 	}
 	//std::cout << "ID: " << id << " COR: " << c << " INGRESSO " << ing << " DURACAO " << d << " PRIORIDADE " << p << "\n";
-	Processo* processo = new Processo(id, c, ing, d, p, y); //Instancia um processo para esta itera√ß√£o, y define sua altura y na tela
-	
-	y++; //Incrementa para o pr√≥ximo processo
+	Processo* processo = new Processo(id, c, ing, d, p, y); //Instancia um processo para esta iteraÁ„o, y define sua altura y na tela
+
+	y++; //Incrementa para o prÛximo processo
 	if (processo)
 	{
 		sist->recebeProcesso(processo); //Registra os processos no Sistema
-		processos.push_back(processo); //Inclui no vector local tamb√©m
+		processos.push_back(processo); //Inclui no vector local tambÈm
 	}
 	else
 		std::cout << "Erro ao criar processo de id: " << id << std::endl;
@@ -55,9 +55,9 @@ void Controlador::editaProcesso(std::string id, unsigned long int c, int ing, in
 		{
 			processos[i]->setCor(c);
 
-			if (tempoDecorrido < ing && !processos[i]->getIniciada()) //N√£o podemos inserir processos "no passado" e nem editar o ingresso de um processo que j√° ingressou
+			if (tempoDecorrido < ing && !processos[i]->getIniciada()) //N„o podemos inserir processos "no passado" e nem editar o ingresso de um processo que j· ingressou
 				processos[i]->setIngresso(ing);
-			
+
 			processos[i]->setDuracao(d);
 			processos[i]->setPrioridade(p);
 			processos[i]->cancelaTermino();
@@ -104,7 +104,7 @@ void Controlador::exibeInformacoes()
 		int ingresso = processos[i]->getIngresso();
 		int duracao = processos[i]->getDuracao();
 		int termino = processos[i]->getTermino();
-		int prioridade = processos[i]->getPrioridade();
+		int prioridade = processos[i]->getPrioridadeD();
 		int estadoQuantum = processos[i]->getTempoComCPU();
 		bool ativa = processos[i]->getAtiva();
 		bool suspensa = processos[i]->getSuspensa();
@@ -115,11 +115,12 @@ void Controlador::exibeInformacoes()
 		std::cout << "ID: " << id << std::endl;
 		std::cout << "Ingresso: " << ingresso << std::endl;
 		std::cout << "Duracao: " << duracao << std::endl;
-		std::cout << "Prioridade: " << prioridade << std::endl;
+		std::cout << "Prioridade atual: " << prioridade << std::endl;
+		std::cout << "Prioridade base: " << processos[i]->getPrioridade() << std::endl;
 
-		if (!terminada) //Dado n√£o relevante em processo terminado
+		if (!terminada) //Dado n„o relevante em processo terminado
 			std::cout << "Tempo decorrido do Quantum: " << estadoQuantum << std::endl;
-		
+
 		if (ativa)
 		{
 			std::cout << "Status ativa: SIM" << std::endl;
@@ -132,7 +133,7 @@ void Controlador::exibeInformacoes()
 			std::cout << "Status suspensa: SIM" << std::endl;
 		else
 			std::cout << "Status suspensa: NAO" << std::endl;
-		
+
 		if (terminada)
 		{
 			std::cout << "Status terminada: SIM" << std::endl;
@@ -152,8 +153,8 @@ void Controlador::executar(int tempoDecorrido)
 {
 	this->tempoDecorrido = tempoDecorrido; //Diz ao controlador o tempo atual do sistema
 
-	int opcao = -1; ///////Vari√°vel gen√©rica para switch case////////////
-	
+	int opcao = -1; ///////Vari·vel genÈrica para switch case////////////
+
 	std::string id; ////////////////////////////////////////////////////
 	unsigned long int c;/////////CONTROLE DE PROCESSOS//////////////////
 	int ing, d, p; /////////////////////////////////////////////////////
@@ -162,7 +163,7 @@ void Controlador::executar(int tempoDecorrido)
 	int q; //////////////////////CONTROLE DO SISTEMA////////////////////
 	int cpus; //////////////////////////////////////////////////////////
 
-	char sep; ////////////Separador para pular a v√≠rgula////////////////
+	char sep; ////////////Separador para pular a vÌrgula////////////////
 
 	while (opcao != 0)
 	{
@@ -175,7 +176,7 @@ void Controlador::executar(int tempoDecorrido)
 		std::cout << "3 - Editar o SO" << std::endl;
 		std::cout << "4 - Exibir as informacoes do SO" << std::endl;
 		std::cout << ">";
-		
+
 		std::cin >> opcao;
 
 		if (opcao == 1)
@@ -202,11 +203,11 @@ void Controlador::executar(int tempoDecorrido)
 			std::cin >> std::dec >> alg >> q >> cpus;
 			editaSistema(alg, q, cpus);
 		}
-		
+
 		else if (opcao == 4)
 			exibeInformacoes();
-		
-		if (std::cin.fail()) 
+
+		if (std::cin.fail())
 		{
 			std::cin.clear(); // Limpa as flags de erro (como failbit)
 			std::cin.ignore(10000, '\n');
