@@ -6,6 +6,7 @@
 
 
 class Sistema;
+class OperacaoIO;
 using namespace::sf;
 
 enum TipoAcao
@@ -42,6 +43,8 @@ struct Estado
     int posX;
     int prioridadeD;
     int tempoOcioso;
+    int operacaoES;
+    int duracaoOpES;
     //std::vector<EstadoAcao> estadoAcoes;
 };
 
@@ -69,6 +72,8 @@ private:
     bool terminada; //Define se o processo j� terminou sua execu��o
     bool iniciada; //Define se o processo j� iniciou, isto �, ingressou no Sistema
     bool suspensa; ///Define se o processo est� suspenso
+    int operacaoES; //Identifica uma operação de E/S
+    int duracaoOpES; //Duracao da operação de E/S
 
     int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela j� terminou sua execu��o
     int tempoComCPU; //Para contar o tempo para a passagem do quantum
@@ -97,7 +102,7 @@ public:
     void adicionaAcao(TipoAcao tipo, int mutexId, int instante);
     void exibeAcoes();
 
-    const bool getAtiva();
+    const bool getAtiva(); //Getters
     const bool getIniciada();
     const bool getTerminada();
     const int getPrioridade();
@@ -109,6 +114,9 @@ public:
     const int getTermino();
     const int getEstadoQuantum();
     const bool getSuspensa();
+    int getOperacaoES();
+    int getDuracaoOpES();
+
     const int getTempoComCPU();
     const std::vector<AcaoMutex>& getAcoes();
 
@@ -116,10 +124,15 @@ public:
     void resetaQuantum();
     void recebeCPU(int indice);
     void removeCPU();
+    void recebeDispositivoES(int id);
+    void removeDispositivoES();
+    bool terminouOperacaoES();
     int getIndiceCPU();
     void incrementaTempoOcioso();
     void resetaEnvelhecimento();
     void verificaAcoesMutex(Sistema* sistema);
+    void solicitaDispositivoES(Sistema* sistema, int id, int duracao);
+    bool terminouOperacaoES(Sistema* sistema);
 
     std::string getId(); //Fun��es para editar uma tarefa
     void setCor(unsigned long int cor);

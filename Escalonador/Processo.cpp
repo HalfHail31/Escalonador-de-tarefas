@@ -1,9 +1,10 @@
 ﻿#include "Processo.h"
 #include "Sistema.h"
+#include "OperacaoIO.h"
 #include <iostream>
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), prioridadeD(p),
-ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false), operacaoES(-1), duracaoOpES(-1)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -54,11 +55,7 @@ void Processo::executar(int tempoDecorrido)
 	if (!iniciada)
 		iniciada = true;
 
-	// Salvar estado antes de aplicar avanços para que o histórico seja
-	// consistente com o modo passo-a-passo (executarPassos salva antes também).
 	salvarEstado();
-
-	// Desenhar primeiro o avanço temporal (consistente com executarPassos)
 	prosseguir(tempoDecorrido);
 
 	if (ativa)
@@ -180,6 +177,8 @@ void Processo::salvarEstado()
 	e.posX = posX;
 	e.prioridadeD = prioridadeD;
 	e.tempoOcioso = tempoOcioso;
+	e.operacaoES = operacaoES;
+	e.duracaoOpES = duracaoOpES;
 	//e.estadoAcoes.clear();
 	/*for (const AcaoMutex& a : acoes)
 	{
@@ -212,6 +211,8 @@ void Processo::recuperaEstado()
 	posX = e.posX;
 	prioridadeD = e.prioridadeD;
 	tempoOcioso = e.tempoOcioso;
+	operacaoES = e.operacaoES;
+	duracaoOpES = e.duracaoOpES;
 	/*for (size_t i = 0;
 		i < acoes.size() && i < e.estadoAcoes.size();
 		i++)
@@ -379,6 +380,79 @@ void Processo::removeCPU()
 	//std::cout << "CPU indice " << indiceCPU << " retirada do processo " << id << std::endl;
 
 	indiceCPU = -1;
+}
+
+void Processo::recebeDispositivoES(int id)
+{
+	operacaoES = id;
+}
+
+void Processo::removeDispositivoES()
+{
+	operacaoES = -1;
+}
+
+int Processo::getOperacaoES()
+{
+	return operacaoES;
+}
+
+int Processo::getDuracaoOpES()
+{
+	return duracaoOpES;
+}
+
+void Processo::solicitaDispositivoES(Sistema* sistema, int id, int duracao)
+{
+	OperacaoIO* op = sistema->criaDispositivo(id);
+	bool obteve = op->solicitar(this);
+
+	// Processo solicita E/S: deve ficar suspenso e liberar CPU se estava ativo
+	suspensa = true;
+	if (ativa)
+	{
+		mudaEstado();
+		sistema->retiraProcessador(this);
+	}
+
+	operacaoES = id;
+	duracaoOpES = duracao;
+
+	if (obteve)
+	{
+		// ja e dono do dispositivo; aguardará duracao
+	}
+}
+
+bool Processo::terminouOperacaoES(Sistema* sistema)
+{
+	if (operacaoES == -1)
+		return false;
+
+	// Só decrementa duração se este processo for o dono atual do dispositivo
+	OperacaoIO* op = sistema->getDispositivo(operacaoES);
+	if (!op)
+		return false;
+
+	if (op->getDono() != this)
+		return false; // ainda na fila, não conta tempo
+
+	// Declarar contagem da duracao da operação
+	if (duracaoOpES > 0)
+		duracaoOpES--;
+
+	if (duracaoOpES > 0)
+		return false;
+
+	// terminou agora
+	Processo* prox = op->liberar(this);
+	// prox recebe o dispositivo, mas permanece suspenso; escalonador decide alocação de CPU
+
+	suspensa = false;
+	operacaoES = -1;
+	duracaoOpES = -1;
+
+	return true;
 }
 
 int Processo::getIndiceCPU()
