@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#define TAM 10
+
 using namespace::sf;
 
 struct Estado

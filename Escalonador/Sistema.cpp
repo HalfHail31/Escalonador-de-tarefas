@@ -1,7 +1,8 @@
 ﻿#include "Sistema.h"
+#include "Processo.h"
 #include <iostream>
 
-Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false)
+Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false), posTempo(0)
 {
     std::cout << "-------- Escalonador de Tarefas --------" << std::endl;
     std::cout << "Sistema operacional de " << CPUs << " processadores e quantum de " << quantum << "s" << std::endl;
@@ -255,7 +256,7 @@ void Sistema::executarSRTF(int tempoDecorrido)
 
 void Sistema::executar(int tempoDecorrido, int dir)
 {
-    if (processos.empty()) //N�o continua se n�o existirem processos
+    if (processos.empty()) //Não continua se não existirem processos
         return;
 
     int tam = processos.size();
@@ -286,8 +287,10 @@ void Sistema::executar(int tempoDecorrido, int dir)
     }*/
 
     if (!porEtapas)
+    {
+        avancaTempo(tempoDecorrido);
         verificaEscalonamento(tempoDecorrido);
-
+    }
     //Se por etapas, utiliza a pr�pria fun��o
     if (porEtapas)
         simulaEtapas(tempoDecorrido);
@@ -297,6 +300,27 @@ void Sistema::executar(int tempoDecorrido, int dir)
             if (!processos[i]->getTerminada()) //N�o precisa mais executar uma tarefa que j� terminou
                 processos[i]->executar(tempoDecorrido);
     }
+}
+
+void Sistema::avancaTempo(int tempoDecorrido)
+{
+    posTempo = tempoDecorrido * TAM;
+    RectangleShape* rect = new RectangleShape;
+
+    rect->setSize(Vector2f(TAM, 1));
+    rect->setPosition(Vector2f(posTempo, ALTURA_TELA - 5));
+    
+    tempoSimulado.push_back(rect);
+}
+
+void Sistema::retornaTempo()
+{
+    int size = (int)tempoSimulado.size();
+    if (size == 0)
+        return;
+
+    delete tempoSimulado.back();
+    tempoSimulado.pop_back();
 }
 
 void Sistema::verificaEscalonamento(int tempoDecorrido) //Verifica se � necess�rio fazer um escalonamento

@@ -1,13 +1,11 @@
 ﻿#include "Processo.h"
 #include <iostream>
 
-#define TAM 10
-
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), prioridadeD(p),
 ativa(false), terminada(false), suspensa(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
-	posY = y * TAM * 2;
+	posY = y * TAM * 1.5;
 
 	if (fonte.loadFromFile("OpenSans.ttf"))
 	{
