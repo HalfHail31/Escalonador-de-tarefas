@@ -297,7 +297,6 @@ void Sistema::executar(int tempoDecorrido, int dir)
         avancaTempo(tempoDecorrido);
         verificaEscalonamento(tempoDecorrido);
     }
-
     //Se por etapas, utiliza a pr�pria fun��o
     if (porEtapas)
         simulaEtapas(tempoDecorrido);
@@ -319,7 +318,6 @@ void Sistema::avancaTempo(int tempoDecorrido)
 
     rect->setSize(Vector2f(TAM, 1));
     rect->setPosition(Vector2f(posTempo, ALTURA_TELA - 5));
-
     tempoSimulado.push_back(rect);
 }
 
