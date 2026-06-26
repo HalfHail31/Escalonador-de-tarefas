@@ -22,6 +22,8 @@ private:
     sf::Font fonte; //Fonte para a legenda
     std::vector<Processo*> processos; //Lista de processos
     std::vector<sf::CircleShape*> processadores; //Lista de processadores
+    std::vector<RectangleShape*> tempoSimulado; //Desenha a linha do tempo
+    int posTempo;
     std::vector<EscalonadorMutex*> mutexes;
 
 public:
@@ -38,6 +40,8 @@ public:
     void executarPRIOp(int tempoDecorrido);
     void executarSRTF(int tempoDecorrido);
     void executar(int tempoDecorrido, int dir);
+    void avancaTempo(int tempoDecorrido);
+    void retornaTempo();
     void verificaEscalonamento(int tempoDecorrido);
     bool desempate(Processo* atual, Processo* candidato);
 

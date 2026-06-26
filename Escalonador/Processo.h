@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
+#define TAM 10
+
 
 class Sistema;
 using namespace::sf;
