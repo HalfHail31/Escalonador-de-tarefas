@@ -3,7 +3,28 @@
 #include <string>
 #include <vector>
 
+class Sistema;
 using namespace::sf;
+
+enum TipoAcao
+{
+    LOCK,
+    UNLOCK
+};
+
+struct AcaoMutex
+{
+    TipoAcao tipo;
+    int mutexId;
+    int instante;
+
+    bool executada = false;
+};
+
+/*struct EstadoAcao
+{
+    bool executada;
+};*/
 
 struct Estado
 {
@@ -19,6 +40,7 @@ struct Estado
     int posX;
     int prioridadeD;
     int tempoOcioso;
+    //std::vector<EstadoAcao> estadoAcoes;
 };
 
 class Processo
@@ -36,12 +58,16 @@ private:
     int prioridade; //Prioridade definida pelo usu�rio
 	int prioridadeD;//Prioridade que pode ser alterada por envelhecimento
     int indiceCPU; //�ndice da CPU recebida para executar
+    std::vector<AcaoMutex> acoes;
+
     int posX; //Posi��o em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posi��o em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()
+    
     bool ativa; //Define se o processo est� executando
     bool terminada; //Define se o processo j� terminou sua execu��o
     bool iniciada; //Define se o processo j� iniciou, isto �, ingressou no Sistema
     bool suspensa; ///Define se o processo est� suspenso
+
     int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela j� terminou sua execu��o
     int tempoComCPU; //Para contar o tempo para a passagem do quantum
     int tempoOcioso; //Para processos que ficarem muito tempo ociosos possam aumentar temporariamente sua prioridade
@@ -66,6 +92,8 @@ public:
     void recuperaEstado();
     void mudaEstado();
     void termina(int tempoDecorrido);
+    void adicionaAcao(TipoAcao tipo, int mutexId, int instante);
+    void exibeAcoes();
 
     const bool getAtiva();
     const bool getIniciada();
@@ -73,12 +101,14 @@ public:
     const int getPrioridade();
 	const int getPrioridadeD();
     const int getTempoRestante();
+    int getTempoExecutado();
     const int getIngresso();
     const int getDuracao();
     const int getTermino();
     const int getEstadoQuantum();
     const bool getSuspensa();
     const int getTempoComCPU();
+    const std::vector<AcaoMutex>& getAcoes();
 
     void setQuantum(int q);
     void resetaQuantum();
@@ -87,6 +117,7 @@ public:
     int getIndiceCPU();
     void incrementaTempoOcioso();
     void resetaEnvelhecimento();
+    void verificaAcoesMutex(Sistema* sistema);
 
     std::string getId(); //Fun��es para editar uma tarefa
     void setCor(unsigned long int cor);

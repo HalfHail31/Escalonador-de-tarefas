@@ -1,9 +1,7 @@
 ﻿#pragma once
-
 #include "Processo.h"
-
+#include "Mutex.h"
 #include <vector>
-
 #include <string>
 
 #define ALTURA_TELA 800
@@ -24,6 +22,7 @@ private:
     sf::Font fonte; //Fonte para a legenda
     std::vector<Processo*> processos; //Lista de processos
     std::vector<sf::CircleShape*> processadores; //Lista de processadores
+    std::vector<EscalonadorMutex*> mutexes;
 
 public:
     Sistema(std::string a, int q, int p);
@@ -45,11 +44,14 @@ public:
     void setAlgoritmo(std::string alg);/////////////////////////////////////////
     void setQuantum(int q); ////////////////Para editar o sistema///////////////
     void setProcessadores(int c); //////////////////////////////////////////////
+    EscalonadorMutex* criaMutex(int id);
+    void reconstruirMutexes();
 
     const std::string getAlgoritmo(); //////////////////////////////////////////
     const int getNumCPUs(); ////////////////////////////////////////////////////
     const int getNumCPUsLivres(); /////////Para conferir dados do sistema///////
     const int getQuantum(); ////////////////////////////////////////////////////
+    EscalonadorMutex* getMutex(int id);
 
     void desenhaProcessos();
     void desenhaProcessadores();

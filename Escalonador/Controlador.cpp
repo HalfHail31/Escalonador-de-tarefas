@@ -43,6 +43,38 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 		std::cout << "Erro ao criar processo de id: " << id << std::endl;
 }
 
+void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, const std::vector<AcaoMutex>& acoes)
+{
+	if (tempoDecorrido > ing)
+	{
+		std::cout << "Nao da para inserir um processo em um tempo ja decorrido" << std::endl;
+		return;
+	}
+	Processo* processo = new Processo(id, c, ing, d, p, y);
+
+	for (const AcaoMutex& acao : acoes)
+	{
+		processo->adicionaAcao(
+			acao.tipo,
+			acao.mutexId,
+			acao.instante
+		);
+	}
+
+	y++;
+	if (processo)
+	{
+		sist->recebeProcesso(processo);
+		processos.push_back(processo);
+		processo->exibeAcoes();
+
+	}
+	else
+	{
+		std::cout << "Erro ao criar processo de id: " << id << std::endl;
+	}
+}
+
 //void Controlador::removeProcesso() {}
 
 void Controlador::editaProcesso(std::string id, unsigned long int c, int ing, int d, int p)

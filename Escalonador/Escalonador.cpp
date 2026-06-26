@@ -58,7 +58,42 @@ Sistema* criaSimulador(Controlador* controle)
             ss >> duracao >> sep;
             ss >> prioridade >> sep;
 
-            controle->criaProcesso(id, cor, ingresso, duracao, prioridade); //Cria processos que ser�o inseridos no sistema
+            std::vector<AcaoMutex> acoes;
+            std::string token;
+
+            while (std::getline(ss, token, ';'))
+            {
+                AcaoMutex acao;
+
+                if (token.substr(0, 2) == "ML")
+                    acao.tipo = LOCK;
+                else if (token.substr(0, 2) == "MU")
+                    acao.tipo = UNLOCK;
+                else
+                    continue;
+
+                acao.mutexId = std::stoi(token.substr(2, 2));
+
+                acao.instante = std::stoi(token.substr(5, 2));
+
+                acoes.push_back(acao);
+                sist->criaMutex(acao.mutexId);
+            }
+
+            /*for (const auto& a : acoes)
+            {
+                std::cout
+                    << id
+                    << " -> "
+                    << (a.tipo == LOCK ? "LOCK" : "UNLOCK")
+                    << " M"
+                    << a.mutexId
+                    << " @ "
+                    << a.instante
+                    << std::endl;
+            }*/
+
+            controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes); //Cria processos que ser�o inseridos no sistema
         }
         arquivo.close();
         return sist;

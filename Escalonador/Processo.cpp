@@ -1,4 +1,5 @@
 ﻿#include "Processo.h"
+#include "Sistema.h"
 #include <iostream>
 
 #define TAM 10
@@ -181,6 +182,14 @@ void Processo::salvarEstado()
 	e.posX = posX;
 	e.prioridadeD = prioridadeD;
 	e.tempoOcioso = tempoOcioso;
+	//e.estadoAcoes.clear();
+	/*for (const AcaoMutex& a : acoes)
+	{
+		EstadoAcao ea;
+		ea.executada = a.executada;
+
+		e.estadoAcoes.push_back(ea);
+	}*/
 
 	historico.push_back(e);
 }
@@ -205,6 +214,13 @@ void Processo::recuperaEstado()
 	posX = e.posX;
 	prioridadeD = e.prioridadeD;
 	tempoOcioso = e.tempoOcioso;
+	/*for (size_t i = 0;
+		i < acoes.size() && i < e.estadoAcoes.size();
+		i++)
+	{
+		acoes[i].executada =
+			e.estadoAcoes[i].executada;
+	}*/
 }
 
 void Processo::retroceder(int tempoDecorrido)
@@ -246,6 +262,32 @@ void Processo::termina(int tempoDecorrido)
 	quantumMax = false;
 }
 
+void Processo::adicionaAcao(TipoAcao tipo, int mutexId, int instante)
+{
+	AcaoMutex a;
+	a.tipo = tipo;
+	a.mutexId = mutexId;
+	a.instante = instante;
+
+	acoes.push_back(a);
+}
+
+void Processo::exibeAcoes()
+{
+	std::cout << "Acoes de " << id << ":" << std::endl;
+
+	for (const auto& a : acoes)
+	{
+		std::cout
+			<< (a.tipo == LOCK ? "LOCK" : "UNLOCK")
+			<< " M"
+			<< a.mutexId
+			<< " @ "
+			<< a.instante
+			<< std::endl;
+	}
+}
+
 const bool Processo::getAtiva()
 {
 	return ativa;
@@ -276,6 +318,11 @@ const int Processo::getTempoRestante()
 	return duracao - tempoExecutado;
 }
 
+int Processo::getTempoExecutado()
+{
+	return tempoExecutado;
+}
+
 const int Processo::getIngresso()
 {
 	return ingresso;
@@ -289,6 +336,11 @@ const bool Processo::getSuspensa()
 const int Processo::getTempoComCPU()
 {
 	return tempoComCPU;
+}
+
+const std::vector<AcaoMutex>& Processo::getAcoes()
+{
+	return acoes;
 }
 
 const int Processo::getDuracao()
@@ -373,6 +425,52 @@ void Processo::resetaEnvelhecimento()
 
 	prioridadeD = prioridade;
 	tempoOcioso = 0;
+}
+
+void Processo::verificaAcoesMutex(Sistema* sistema)
+{
+	for (AcaoMutex& acao : acoes)
+	{
+		if (acao.executada)
+			continue;
+
+		if (acao.instante != tempoExecutado)
+			continue;
+
+		EscalonadorMutex* mutex =
+			sistema->getMutex(acao.mutexId);
+
+		if (!mutex)
+			continue;
+
+		if (acao.tipo == LOCK)
+		{
+			std::cout
+				<< "[T="
+				<< tempoExecutado
+				<< "] "
+				<< id
+				<< " solicita M"
+				<< acao.mutexId
+				<< std::endl;
+
+			mutex->solicitar(this);
+		}
+		else
+		{
+			std::cout
+				<< "[T="
+				<< tempoExecutado
+				<< "] "
+				<< id
+				<< " libera M"
+				<< acao.mutexId
+				<< std::endl;
+
+			mutex->liberar(this);
+		}
+		acao.executada = true;
+	}
 }
 
 std::string Processo::getId()

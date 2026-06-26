@@ -38,6 +38,13 @@ Sistema::~Sistema()
 
     for (int i = 0; i < size; i++)
         delete processadores[i];
+
+    processadores.clear();
+
+    for (EscalonadorMutex* mutex : mutexes)
+        delete mutex;
+
+    mutexes.clear();
 }
 
 void Sistema::recebeProcesso(Processo* p)
@@ -294,8 +301,11 @@ void Sistema::executar(int tempoDecorrido, int dir)
     else
     {
         for (int i = 0; i < tam; i++)
-            if (!processos[i]->getTerminada()) //N�o precisa mais executar uma tarefa que j� terminou
+            if (!processos[i]->getTerminada()) { //N�o precisa mais executar uma tarefa que j� terminou
                 processos[i]->executar(tempoDecorrido);
+                processos[i]->verificaAcoesMutex(this);
+            }
+
     }
 }
 
@@ -424,6 +434,57 @@ void Sistema::setProcessadores(int c)
     }
 }
 
+EscalonadorMutex* Sistema::criaMutex(int id)
+{
+    EscalonadorMutex* mutex = getMutex(id);
+
+    if (mutex != nullptr)
+        return mutex;
+
+    mutex = new EscalonadorMutex(id);
+
+    mutexes.push_back(mutex);
+
+    return mutex;
+}
+
+void Sistema::reconstruirMutexes()
+{
+    for (auto mutex : mutexes)
+        mutex->reset();
+
+    for (auto processo : processos)
+    {
+        int tempoExecutado =
+            processo->getTempoExecutado();
+
+        const std::vector<AcaoMutex>& acoes =
+            processo->getAcoes();
+
+        for (const AcaoMutex& acao : acoes)
+        {
+            if (acao.instante > tempoExecutado)
+                continue;
+
+            EscalonadorMutex* mutex =
+                getMutex(acao.mutexId);
+
+            if (!mutex)
+                continue;
+
+            if (acao.tipo == LOCK)
+            {
+                mutex->solicitar(processo);
+            }
+            else
+            {
+                mutex->liberar(processo);
+            }
+        }
+    }
+
+}
+
 const std::string Sistema::getAlgoritmo()
 {
     return algoritmo;
@@ -442,6 +503,17 @@ const int Sistema::getNumCPUsLivres()
 const int Sistema::getQuantum()
 {
     return quantum;
+}
+
+EscalonadorMutex* Sistema::getMutex(int id)
+{
+    for (EscalonadorMutex* mutex : mutexes)
+    {
+        if (mutex->getId() == id)
+            return mutex;
+    }
+
+    return nullptr;
 }
 
 void Sistema::desenhaProcessos()
@@ -480,6 +552,7 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
         {
             processos[i]->executarPassos(tempoDecorrido, -1);
         }
+        reconstruirMutexes();
         CPUsLivres = CPUs;
         for (int i = 0; i < CPUs; i++)
             processadores[i]->setFillColor(sf::Color::Green);
@@ -498,11 +571,13 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
 
     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left)) //Direita avan�a
     {
+        reconstruirMutexes();
         verificaEscalonamento(tempoDecorrido);
 
         for (int i = 0; i < tam; i++)
         {
             processos[i]->executarPassos(tempoDecorrido, 1);
+            processos[i]->verificaAcoesMutex(this);
         }
         // Ao avan�ar no modo passo-a-passo tamb�m devemos executar o escalonador
         // para ajustar atribui��es de CPU (cede/retira) conforme o estado restaurado.
