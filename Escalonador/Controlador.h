@@ -21,8 +21,7 @@ public:
 	void setSistema(Sistema* s);
 	void setProcessos();
 	void criaProcesso(std::string id, unsigned long int c, int ing, int d, int p);
-	void criaProcesso(std::string id, unsigned long int c, int ing, int d, int p,
-		const std::vector<AcaoMutex>& acoes);
+	void criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, const std::vector<AcaoMutex>& acoes);
 	//void removeProcesso();
 	void editaProcesso(std::string id, unsigned long int c, int ing, int d, int p);
 	void editaSistema(std::string a, int q, int p);

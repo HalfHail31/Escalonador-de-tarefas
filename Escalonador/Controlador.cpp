@@ -68,7 +68,6 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 		sist->recebeProcesso(processo);
 		processos.push_back(processo);
 		processo->exibeAcoes();
-
 	}
 	else
 	{

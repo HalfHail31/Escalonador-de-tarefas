@@ -148,10 +148,10 @@ int main()
                 texture.create(window.getSize().x, window.getSize().y); //Cria uma textura com o tamanho da tela
                 texture.update(window);
 
-                sf::Image screenshot = texture.copyToImage();//Tira uma captura da tela
+                sf::Image screenshot = texture.copyToImage(); //Tira uma captura da tela
 
-                if (screenshot.saveToFile("GraficoGrant.png")) //Salva como GraficoGrant.png
-                    std::cout << "Screenshot salva como GraficoGrant.png" << std::endl;
+                if (screenshot.saveToFile("GraficoGant.png")) //Salva como GraficoGant.png
+                    std::cout << "Screenshot salva como GraficoGant.png" << std::endl;
                 else
                     std::cout << "Erro ao salvar screenshot" << std::endl;
 
@@ -213,8 +213,10 @@ int main()
             }
         }
 
-        sistema->desenhaProcessos(); //Desenha na janela
+        //Desenha na janela
+        sistema->desenhaProcessos();
         sistema->desenhaProcessadores();
+        sistema->desenhaLinhaDoTempo();
         window.display(); //Exibe o conte�do desenhado na janela
     }
     return 0;

@@ -1,5 +1,6 @@
 ﻿#include "Sistema.h"
 #include "Processo.h"
+#include "OperacaoIO.h"
 #include <iostream>
 
 Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false), posTempo(0)
@@ -46,6 +47,11 @@ Sistema::~Sistema()
         delete mutex;
 
     mutexes.clear();
+
+    for (OperacaoIO* d : dispositivos)
+        delete d;
+
+    dispositivos.clear();
 }
 
 void Sistema::recebeProcesso(Processo* p)
@@ -265,7 +271,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
 {
     if (processos.empty()) //Não continua se não existirem processos
         return;
-
+    
     int tam = processos.size();
 
     for (Processo* p : processos)
@@ -293,42 +299,67 @@ void Sistema::executar(int tempoDecorrido, int dir)
         }
     }*/
 
-    if (!porEtapas) {
-        avancaTempo(tempoDecorrido);
-        verificaEscalonamento(tempoDecorrido);
-    }
     //Se por etapas, utiliza a pr�pria fun��o
     if (porEtapas)
         simulaEtapas(tempoDecorrido);
     else
     {
+        avancaTempo(tempoDecorrido);
+        verificaEscalonamento(tempoDecorrido);
         for (int i = 0; i < tam; i++)
-            if (!processos[i]->getTerminada()) { //N�o precisa mais executar uma tarefa que j� terminou
+        {
+            if (!processos[i]->getTerminada()) //N�o precisa mais executar uma tarefa que j� terminou
+            {
                 processos[i]->executar(tempoDecorrido);
                 processos[i]->verificaAcoesMutex(this);
-            }
 
+                if (processos[i]->getSuspensa())
+                {
+                    if (processos[i]->terminouOperacaoES(this))
+                    {
+                        // Se terminou E/S agora, executar escalonamento
+                        verificaEscalonamento(tempoDecorrido);
+                    }
+                }
+            }
+        }
     }
 }
 
 void Sistema::avancaTempo(int tempoDecorrido)
 {
-    posTempo = tempoDecorrido * TAM;
+    posTempo = tempoDecorrido * TAM; //Aumenta o tamanho da linha do eixo X
     RectangleShape* rect = new RectangleShape;
 
-    rect->setSize(Vector2f(TAM, 1));
-    rect->setPosition(Vector2f(posTempo, ALTURA_TELA - 5));
+    rect->setSize(Vector2f(TAM, 5));
+    rect->setPosition(Vector2f(posTempo, ALTURA_TELA - TAM * 0.5));
+    rect->setOutlineThickness(1);
+    rect->setOutlineColor(sf::Color::Black);
+    rect->setFillColor(sf::Color::Blue);
     tempoSimulado.push_back(rect);
+
+    Text* aux = new Text; //Imprime o tempo atual no eixo X
+    aux->setFont(fonte);
+    aux->setString(std::to_string(tempoDecorrido));
+    aux->setCharacterSize(8);
+    aux->setFillColor(sf::Color::Black);
+    aux->setStyle(sf::Text::Bold);
+    aux->setPosition(posTempo, ALTURA_TELA - TAM * 2);
+
+    legendaTempo.push_back(aux);
 }
 
 void Sistema::retornaTempo()
 {
     int size = (int)tempoSimulado.size();
-    if (size == 0)
+    int size2 = (int)legendaTempo.size();
+    if (size == 0 || size2 == 0)
         return;
 
     delete tempoSimulado.back();
     tempoSimulado.pop_back();
+    delete legendaTempo.back();
+    legendaTempo.pop_back();
 }
 
 void Sistema::verificaEscalonamento(int tempoDecorrido) //Verifica se � necess�rio fazer um escalonamento
@@ -451,8 +482,6 @@ void Sistema::setProcessadores(int c)
         legenda.setFillColor(sf::Color::Black);
         legenda.setStyle(sf::Text::Bold);
         legenda.setPosition(posUltimaCPU.x - 150, posUltimaCPU.y + 10);
-
-
     }
 }
 
@@ -469,6 +498,39 @@ EscalonadorMutex* Sistema::criaMutex(int id)
 
     return mutex;
 }
+
+OperacaoIO* Sistema::criaDispositivo(int id)
+{
+    OperacaoIO* d = getDispositivo(id);
+
+    if (d != nullptr)
+        return d;
+
+    d = new OperacaoIO(id);
+    dispositivos.push_back(d);
+    return d;
+}
+
+OperacaoIO* Sistema::getDispositivo(int id)
+{
+    for (OperacaoIO* d : dispositivos)
+    {
+        if (d->getId() == id)
+            return d;
+    }
+
+    return nullptr;
+}
+
+void Sistema::reconstruirDispositivos()
+{
+    for (OperacaoIO* d : dispositivos)
+        d->reset();
+
+    // Nota: reconstrução completa de E/S dependeria de ações históricas de E/S
+    // que ainda não estão modeladas. Mantemos os dispositivos limpos.
+}
+
 
 void Sistema::reconstruirMutexes()
 {
@@ -554,6 +616,17 @@ void Sistema::desenhaProcessadores()
     janela->draw(legenda);
 }
 
+void Sistema::desenhaLinhaDoTempo()
+{
+    int tam = tempoSimulado.size();
+
+    for (int i = 0; i < tam; i++)
+    {
+        janela->draw(*(tempoSimulado[i]));
+        janela->draw(*(legendaTempo[i]));
+    }
+}
+
 void Sistema::mudaModo()
 {
     porEtapas = !porEtapas;
@@ -570,6 +643,8 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
 
     if (Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right)) //Esquerda retrocede
     {
+        retornaTempo();
+
         for (int i = 0; i < tam; i++)
         {
             processos[i]->executarPassos(tempoDecorrido, -1);
@@ -593,6 +668,7 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
 
     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left)) //Direita avan�a
     {
+        avancaTempo(tempoDecorrido);
         reconstruirMutexes();
         verificaEscalonamento(tempoDecorrido);
 
@@ -600,6 +676,13 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
         {
             processos[i]->executarPassos(tempoDecorrido, 1);
             processos[i]->verificaAcoesMutex(this);
+            if (processos[i]->getSuspensa())
+            {
+                if (processos[i]->terminouOperacaoES(this))
+                {
+                    verificaEscalonamento(tempoDecorrido);
+                }
+            }
         }
         // Ao avan�ar no modo passo-a-passo tamb�m devemos executar o escalonador
         // para ajustar atribui��es de CPU (cede/retira) conforme o estado restaurado.

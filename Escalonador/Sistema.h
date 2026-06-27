@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Processo.h"
 #include "Mutex.h"
+class OperacaoIO; // forward declaration
 #include <vector>
 #include <string>
 
@@ -23,8 +24,10 @@ private:
     std::vector<Processo*> processos; //Lista de processos
     std::vector<sf::CircleShape*> processadores; //Lista de processadores
     std::vector<RectangleShape*> tempoSimulado; //Desenha a linha do tempo
-    int posTempo;
+    int posTempo; //Para desenhar o eixo X
+    std::vector<Text*> legendaTempo; //Legendas do eixo X
     std::vector<EscalonadorMutex*> mutexes;
+    std::vector<OperacaoIO*> dispositivos; // Dispositivos de E/S
 
 public:
     Sistema(std::string a, int q, int p);
@@ -51,6 +54,10 @@ public:
     EscalonadorMutex* criaMutex(int id);
     void reconstruirMutexes();
 
+    OperacaoIO* criaDispositivo(int id);
+    OperacaoIO* getDispositivo(int id);
+    void reconstruirDispositivos();
+
     const std::string getAlgoritmo(); //////////////////////////////////////////
     const int getNumCPUs(); ////////////////////////////////////////////////////
     const int getNumCPUsLivres(); /////////Para conferir dados do sistema///////
@@ -59,6 +66,7 @@ public:
 
     void desenhaProcessos();
     void desenhaProcessadores();
+    void desenhaLinhaDoTempo();
     void mudaModo();
     bool getPorEtapas();
     void simulaEtapas(int tempoDecorrido);
