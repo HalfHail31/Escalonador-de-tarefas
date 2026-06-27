@@ -42,6 +42,8 @@ struct Estado
     int posX;
     int prioridadeD;
     int tempoOcioso;
+    int inicioOpES;
+    int duracaoOpES;
     //std::vector<EstadoAcao> estadoAcoes;
 };
 
@@ -62,6 +64,8 @@ private:
     int indiceCPU; //�ndice da CPU recebida para executar
     std::vector<AcaoMutex> acoes;
     bool usaMutex; //Define se o processo faz uso de mutex
+    int inicioOperacaoES; //Se o processo faz alguma operação de E/S, ela deve iniciar após a tarefa executar por x segundos
+    int duracaoOperacaoES; //Se o processo faz alguma operção de E/S, ela deve encerrar após a tarefa executar por y segundos
 
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()
@@ -84,6 +88,7 @@ private:
 
 public:
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
+    Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES);
     ~Processo();
 
     void desenha(RenderWindow* window);
@@ -94,7 +99,8 @@ public:
     void retroceder(int tempoDecorrido);
     void salvarEstado();
     void recuperaEstado();
-    void mudaEstado();
+    void mudaEstadoAtiva();
+    void mudaEstadoSuspensa();
     void termina(int tempoDecorrido);
     void adicionaAcao(TipoAcao tipo, int mutexId, int instante);
     void exibeAcoes();

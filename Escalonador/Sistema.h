@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "Processo.h"
 #include "Mutex.h"
-class OperacaoIO; // forward declaration
 #include <vector>
 #include <string>
 
@@ -27,7 +26,6 @@ private:
     int posTempo; //Para desenhar o eixo X
     std::vector<Text*> legendaTempo; //Legendas do eixo X
     std::vector<EscalonadorMutex*> mutexes;
-    std::vector<OperacaoIO*> dispositivos; // Dispositivos de E/S
 
 public:
     Sistema(std::string a, int q, int p);
@@ -53,10 +51,6 @@ public:
     void setProcessadores(int c); //////////////////////////////////////////////
     EscalonadorMutex* criaMutex(int id);
     void reconstruirMutexes();
-
-    OperacaoIO* criaDispositivo(int id);
-    OperacaoIO* getDispositivo(int id);
-    void reconstruirDispositivos();
 
     const std::string getAlgoritmo(); //////////////////////////////////////////
     const int getNumCPUs(); ////////////////////////////////////////////////////

@@ -49,6 +49,10 @@ Sistema* criaSimulador(Controlador* controle)
             int ingresso, duracao, prioridade; //Vari�veis para instanciar Processos
             unsigned long int cor; //Idem
             char sep; //Vari�vel para servir de filtro e ignorar o caractere que n�o � n�mero, no caso, o ";"
+            
+            int iniOpES; //Para tarefas que realizam oerações de E/S
+            int termiOpES;
+            bool realizaOpES = false;
 
             std::getline(ss, id, ';');
 
@@ -69,6 +73,12 @@ Sistema* criaSimulador(Controlador* controle)
                     acao.tipo = LOCK;
                 else if (token.substr(0, 2) == "MU")
                     acao.tipo = UNLOCK;
+                else if (token.substr(0, 2) == "IO")
+                {
+                    realizaOpES = true;
+                    iniOpES = std::stoi(token.substr(2, 2));
+                    termiOpES = std::stoi(token.substr(5, 2));
+                }
                 else
                     continue;
 
@@ -92,8 +102,10 @@ Sistema* criaSimulador(Controlador* controle)
                     << a.instante
                     << std::endl;
             }*/
-
-            controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes); //Cria processos que ser�o inseridos no sistema
+            if (realizaOpES)
+                controle->criaProcesso(id, cor, ingresso, duracao, prioridade, iniOpES, termiOpES); //Cria processos que fazem operação de E/S
+            else
+                controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes); //Cria processos que ser�o inseridos no sistema
         }
         arquivo.close();
         return sist;

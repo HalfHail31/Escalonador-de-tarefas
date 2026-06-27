@@ -1,6 +1,5 @@
 ﻿#include "Sistema.h"
 #include "Processo.h"
-#include "OperacaoIO.h"
 #include <iostream>
 
 Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false), posTempo(0)
@@ -47,11 +46,6 @@ Sistema::~Sistema()
         delete mutex;
 
     mutexes.clear();
-
-    for (OperacaoIO* d : dispositivos)
-        delete d;
-
-    dispositivos.clear();
 }
 
 void Sistema::recebeProcesso(Processo* p)
@@ -76,7 +70,7 @@ void Sistema::cedeProcessador(Processo* p)
         {
             if (processadores[i]->getFillColor() == sf::Color::Green || processadores[i]->getFillColor() == cinza)
             {
-                p->mudaEstado();
+                p->mudaEstadoAtiva();
                 p->recebeCPU(i);
                 p->resetaEnvelhecimento();
                 processadores[i]->setFillColor(sf::Color::Red);
@@ -96,7 +90,7 @@ void Sistema::retiraProcessador(Processo* p)
         processadores[idx]->setFillColor(sf::Color::Green);
         //Garantir que o estado ativo fique desativado
         if (p->getAtiva())
-            p->mudaEstado();
+            p->mudaEstadoAtiva();
         p->removeCPU();
         CPUsLivres++;
     }
@@ -130,7 +124,7 @@ void Sistema::executarPRIOp(int tempoDecorrido)
 
     for (int i = 0; i < tam; i++)
     {
-        if (processos[i]->getTerminada()) //Retira CPUs cedidas a processos que j� terminaram
+        if (processos[i]->getTerminada() || !processos[i]->getSuspensa()) //Retira CPUs cedidas a processos que j� terminaram ou suspenderam
             retiraProcessador(processos[i]);
     }
 
@@ -314,13 +308,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
                 processos[i]->verificaAcoesMutex(this);
 
                 if (processos[i]->getSuspensa())
-                {
-                    if (processos[i]->terminouOperacaoES(this))
-                    {
-                        // Se terminou E/S agora, executar escalonamento
-                        verificaEscalonamento(tempoDecorrido);
-                    }
-                }
+                    verificaEscalonamento(tempoDecorrido);
             }
         }
     }
@@ -499,39 +487,6 @@ EscalonadorMutex* Sistema::criaMutex(int id)
     return mutex;
 }
 
-OperacaoIO* Sistema::criaDispositivo(int id)
-{
-    OperacaoIO* d = getDispositivo(id);
-
-    if (d != nullptr)
-        return d;
-
-    d = new OperacaoIO(id);
-    dispositivos.push_back(d);
-    return d;
-}
-
-OperacaoIO* Sistema::getDispositivo(int id)
-{
-    for (OperacaoIO* d : dispositivos)
-    {
-        if (d->getId() == id)
-            return d;
-    }
-
-    return nullptr;
-}
-
-void Sistema::reconstruirDispositivos()
-{
-    for (OperacaoIO* d : dispositivos)
-        d->reset();
-
-    // Nota: reconstrução completa de E/S dependeria de ações históricas de E/S
-    // que ainda não estão modeladas. Mantemos os dispositivos limpos.
-}
-
-
 void Sistema::reconstruirMutexes()
 {
     for (auto mutex : mutexes)
@@ -677,12 +632,7 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
             processos[i]->executarPassos(tempoDecorrido, 1);
             processos[i]->verificaAcoesMutex(this);
             if (processos[i]->getSuspensa())
-            {
-                if (processos[i]->terminouOperacaoES(this))
-                {
-                    verificaEscalonamento(tempoDecorrido);
-                }
-            }
+                verificaEscalonamento(tempoDecorrido);
         }
         // Ao avan�ar no modo passo-a-passo tamb�m devemos executar o escalonador
         // para ajustar atribui��es de CPU (cede/retira) conforme o estado restaurado.

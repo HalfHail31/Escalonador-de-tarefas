@@ -4,7 +4,26 @@
 
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), inicioOperacaoES(-1), duracaoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+{
+	posX = ingresso * TAM;
+	posY = y * TAM * 1.5;
+
+
+	if (fonte.loadFromFile("OpenSans.ttf"))
+	{
+		legenda.setFont(fonte);
+		legenda.setString(id);
+		legenda.setCharacterSize(TAM);
+		legenda.setFillColor(sf::Color::White);
+		legenda.setStyle(sf::Text::Bold);
+	}
+	else
+		std::cout << "Erro ao carregar fonte!" << std::endl;
+}
+
+Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
+ativa(false), inicioOperacaoES(iniOpES), duracaoOperacaoES(termiOpES), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -56,11 +75,16 @@ void Processo::executar(int tempoDecorrido)
 	if (!iniciada)
 		iniciada = true;
 
-	// Salvar estado antes de aplicar avanços para que o histórico seja
-	// consistente com o modo passo-a-passo (executarPassos salva antes também).
+	if (!suspensa && tempoExecutado == inicioOperacaoES && inicioOperacaoES != -1) //Suspende a tarefa para realizar operação de E/S
+		mudaEstadoSuspensa();
+	else if (tempoDecorrido >= (duracaoOperacaoES + ingresso) && duracaoOperacaoES != -1) //Se a operação terminou, a tarefa não precisa mais estar suspensa
+	{
+		mudaEstadoSuspensa();
+		if(!ativa)
+			mudaEstadoAtiva();
+	}
+	
 	salvarEstado();
-
-	// Desenhar primeiro o avanço temporal (consistente com executarPassos)
 	prosseguir(tempoDecorrido);
 
 	if (ativa)
@@ -112,6 +136,15 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		retroceder(tempoDecorrido);
 	else if (dir == 1)
 	{
+		if (!suspensa && tempoDecorrido >= inicioOperacaoES && inicioOperacaoES != -1) //Suspende a tarefa para realizar operação de E/S
+			mudaEstadoSuspensa();
+		else if (tempoDecorrido >= duracaoOperacaoES && duracaoOperacaoES != -1) //Se a operação terminou, a tarefa não precisa mais estar suspensa
+		{
+			mudaEstadoSuspensa();
+			if (!ativa)
+				mudaEstadoAtiva();
+		}
+
 		salvarEstado();
 		prosseguir(tempoDecorrido);
 
@@ -182,6 +215,8 @@ void Processo::salvarEstado()
 	e.posX = posX;
 	e.prioridadeD = prioridadeD;
 	e.tempoOcioso = tempoOcioso;
+	e.inicioOpES = inicioOperacaoES;
+	e.duracaoOpES = duracaoOperacaoES;
 	//e.estadoAcoes.clear();
 	/*for (const AcaoMutex& a : acoes)
 	{
@@ -214,6 +249,8 @@ void Processo::recuperaEstado()
 	posX = e.posX;
 	prioridadeD = e.prioridadeD;
 	tempoOcioso = e.tempoOcioso;
+	inicioOperacaoES = e.inicioOpES;
+	duracaoOperacaoES = e.duracaoOpES;
 	/*for (size_t i = 0;
 		i < acoes.size() && i < e.estadoAcoes.size();
 		i++)
@@ -250,9 +287,15 @@ void Processo::retroceder(int tempoDecorrido)
 		posX = ingresso * TAM;
 }
 
-void Processo::mudaEstado()
+void Processo::mudaEstadoAtiva()
 {
 	ativa = !ativa;
+}
+
+void Processo::mudaEstadoSuspensa()
+{
+	suspensa = !suspensa;
+	if (ativa) mudaEstadoAtiva();
 }
 
 void Processo::termina(int tempoDecorrido)

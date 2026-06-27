@@ -44,6 +44,29 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 		std::cout << "Erro ao criar processo de id: " << id << std::endl;
 }
 
+void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, int iniOp, int termiOp)
+{
+	if (tempoDecorrido > ing)
+	{
+		std::cout << "Nao da para inserir um processo em um tempo ja decorrido" << std::endl;
+		return;
+	}
+
+	if (termiOp < 1) termiOp = 1; //Impede a tarefa de fazer uma operação por 0 segundos
+	if (iniOp < 0) termiOp = 0; //Impede a tarefa de receber início negativo para operação
+
+	Processo* processo = new Processo(id, c, ing, d, p, y, iniOp, termiOp); //Instancia um processo para esta iteração, y define sua altura y na tela
+
+	y++; //Incrementa para o próximo processo
+	if (processo)
+	{
+		sist->recebeProcesso(processo); //Registra os processos no Sistema
+		processos.push_back(processo); //Inclui no vector local também
+	}
+	else
+		std::cout << "Erro ao criar processo de id: " << id << std::endl;
+}
+
 void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, const std::vector<AcaoMutex>& acoes)
 {
 	if (tempoDecorrido > ing)
