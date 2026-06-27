@@ -27,5 +27,6 @@ public:
 	void editaProcesso(std::string id, unsigned long int c, int ing, int d, int p);
 	void editaSistema(std::string a, int q, int p);
 	void exibeInformacoes();
+	void recebeEventosMutex();
 	void executar(int tempoDecorrido);
 };

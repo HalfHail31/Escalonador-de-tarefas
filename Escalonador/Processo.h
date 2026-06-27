@@ -52,23 +52,25 @@ private:
     sf::Color cor; //Cor definida pelo usu�rio
     sf::Text legenda; //Legenda dos processos
     sf::Font fonte; //Fonte para a legenda
-    int ingresso; //Ingresso definido pelo usu�rio
-    int duracao; //Dura��o definida pelo usu�rio
-    int quantum; //Tempo de dura��o de um quantum
+    int ingresso; //Ingresso definido pelo usuário
+    int duracao; //Duração definida pelo usuário
+    int quantum; //Tempo de duração de um quantum
     int termino; //Tempo em que a tarefa terminou sua execu��o
     bool quantumMax; //A tarefa com essa flag ativa pode ser mudada em escalonamentos que consideram quantum
     int prioridade; //Prioridade definida pelo usu�rio
 	int prioridadeD;//Prioridade que pode ser alterada por envelhecimento
     int indiceCPU; //�ndice da CPU recebida para executar
     std::vector<AcaoMutex> acoes;
+    bool usaMutex; //Define se o processo faz uso de mutex
 
-    int posX; //Posi��o em x para o processo ser desenhado, calculado com base em ingresso
-    int posY; //Posi��o em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()
+    int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
+    int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()
     
-    bool ativa; //Define se o processo est� executando
-    bool terminada; //Define se o processo j� terminou sua execu��o
-    bool iniciada; //Define se o processo j� iniciou, isto �, ingressou no Sistema
+    bool ativa; //Define se o processo está executando
+    bool terminada; //Define se o processo já terminou sua execução
+    bool iniciada; //Define se o processo já iniciou, isto é, ingressou no Sistema
     bool suspensa; ///Define se o processo est� suspenso
+    bool recebeuMutex; //Define se possui mutex
 
     int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela j� terminou sua execu��o
     int tempoComCPU; //Para contar o tempo para a passagem do quantum

@@ -1,4 +1,5 @@
 #include "Controlador.h"
+#include <sstream>
 
 Controlador::Controlador() : sist(NULL), y(0), tempoDecorrido(0)
 {
@@ -190,6 +191,9 @@ void Controlador::executar(int tempoDecorrido)
 	std::string id; ////////////////////////////////////////////////////
 	unsigned long int c;/////////CONTROLE DE PROCESSOS//////////////////
 	int ing, d, p; /////////////////////////////////////////////////////
+	std::string mutex;
+	std::vector<AcaoMutex> acoes;
+	std::string token;
 
 	std::string alg;////////////////////////////////////////////////////
 	int q; //////////////////////CONTROLE DO SISTEMA////////////////////
@@ -213,10 +217,30 @@ void Controlador::executar(int tempoDecorrido)
 
 		if (opcao == 1)
 		{
+			std::stringstream ss;
 			std::cout << "Insira os dados do processo a ser criado no formato: id cor ingresso duracao prioridade" << std::endl << ">";
 			std::cin >> std::ws;
 			std::cin >> std::dec >> id >> std::hex >> c >> std::dec >> ing >> d >> p;
+			while (std::getline(ss, token, ';'))
+			{
+				AcaoMutex acao;
+
+				if (token.substr(0, 2) == "ML")
+					acao.tipo = LOCK;
+				else if (token.substr(0, 2) == "MU")
+					acao.tipo = UNLOCK;
+				else
+					continue;
+
+				acao.mutexId = std::stoi(token.substr(2, 2));
+
+				acao.instante = std::stoi(token.substr(5, 2));
+
+				acoes.push_back(acao);
+				sist->criaMutex(acao.mutexId);
+			}
 			std::cout << id << " " << c << " " << ing << " " << d << " " << p << "\n";
+
 			criaProcesso(id, c, ing, d, p);
 		}
 
