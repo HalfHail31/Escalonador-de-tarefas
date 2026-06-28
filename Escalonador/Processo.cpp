@@ -4,7 +4,7 @@
 
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), inicioOperacaoES(-1), duracaoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), inicioOperacaoES(-1), duracaoOperacaoES(-1), tempoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -23,7 +23,7 @@ ativa(false), inicioOperacaoES(-1), duracaoOperacaoES(-1), terminada(false), sus
 }
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), inicioOperacaoES(iniOpES), duracaoOperacaoES(termiOpES), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), inicioOperacaoES(iniOpES), duracaoOperacaoES(termiOpES), tempoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -51,14 +51,49 @@ Processo::~Processo()
 	}
 }
 
-//Desenha o processo
-void Processo::desenha(RenderWindow* window)
+void Processo::desenha(RenderWindow* window) //Desenha o processo
 {
 	int size = (int)tamanho.size();
 
 	for (int i = 0; i < size; i++)
 	{
 		window->draw(*(tamanho[i]));
+
+		if (tamanho[i]->getFillColor() == sf::Color::Black) //Destaca uma tarefa suspensa com uma grade #
+		{
+			sf::Vector2f pos = tamanho[i]->getPosition();
+			sf::Vector2f sizeRect = tamanho[i]->getSize();
+
+			sf::Color corGrade(sf::Color::Red);
+
+			if (usaMutex)
+				corGrade = sf::Color::Blue;
+
+			float tercoX = sizeRect.x / 3.0f;
+			float tercoY = sizeRect.y / 3.0f;
+
+			sf::Vertex hLine1[] = {
+				sf::Vertex(sf::Vector2f(pos.x, pos.y + tercoY), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + sizeRect.x, pos.y + tercoY), corGrade)
+			};
+			sf::Vertex hLine2[] = {
+				sf::Vertex(sf::Vector2f(pos.x, pos.y + 2 * tercoY), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + sizeRect.x, pos.y + 2 * tercoY), corGrade)
+			};
+
+			sf::Vertex vLine1[] = {
+				sf::Vertex(sf::Vector2f(pos.x + tercoX, pos.y), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + tercoX, pos.y + sizeRect.y), corGrade)
+			};
+			sf::Vertex vLine2[] = {
+				sf::Vertex(sf::Vector2f(pos.x + 2 * tercoX, pos.y), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + 2 * tercoX, pos.y + sizeRect.y), corGrade)
+			};
+			window->draw(hLine1, 2, sf::Lines);
+			window->draw(hLine2, 2, sf::Lines);
+			window->draw(vLine1, 2, sf::Lines);
+			window->draw(vLine2, 2, sf::Lines);
+		}
 	}
 	if (iniciada)
 	{
@@ -74,14 +109,21 @@ void Processo::executar(int tempoDecorrido)
 
 	if (!iniciada)
 		iniciada = true;
-
-	if (!suspensa && tempoExecutado == inicioOperacaoES && inicioOperacaoES != -1) //Suspende a tarefa para realizar operação de E/S
-		mudaEstadoSuspensa();
-	else if (tempoDecorrido >= (duracaoOperacaoES + ingresso) && duracaoOperacaoES != -1) //Se a operação terminou, a tarefa não precisa mais estar suspensa
+	
+	if (!suspensa && ativa && inicioOperacaoES != -1 && tempoExecutado == inicioOperacaoES)
 	{
 		mudaEstadoSuspensa();
-		if(!ativa)
-			mudaEstadoAtiva();
+		tempoOperacaoES = duracaoOperacaoES;
+	}
+	else if (suspensa && tempoOperacaoES > 0)
+	{
+		tempoOperacaoES--;
+		if (tempoOperacaoES == 0)
+		{
+			mudaEstadoSuspensa();
+			if (!ativa)
+				mudaEstadoAtiva();
+		}
 	}
 	
 	salvarEstado();
@@ -95,7 +137,7 @@ void Processo::executar(int tempoDecorrido)
 	if (tempoComCPU >= quantum)
 		quantumMax = true;
 
-	if (ativa && !terminada)
+	if (ativa && !suspensa && !terminada)
 		tempoExecutado++;
 
 	if (tempoExecutado >= duracao && !terminada)
@@ -115,6 +157,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		termino = -1;
 		indiceCPU = -1;
 		quantumMax = false;
+		tempoOperacaoES = -1;
 		int sz = (int)tamanho.size();
 		for (int i = 0; i < sz; i++)
 			delete tamanho[i];
@@ -136,16 +179,22 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		retroceder(tempoDecorrido);
 	else if (dir == 1)
 	{
-		if (!suspensa && tempoDecorrido >= inicioOperacaoES && inicioOperacaoES != -1) //Suspende a tarefa para realizar operação de E/S
-			mudaEstadoSuspensa();
-		else if (tempoDecorrido >= duracaoOperacaoES && duracaoOperacaoES != -1) //Se a operação terminou, a tarefa não precisa mais estar suspensa
+		salvarEstado();
+		if (!suspensa && ativa && inicioOperacaoES != -1 && tempoExecutado == inicioOperacaoES)
 		{
 			mudaEstadoSuspensa();
-			if (!ativa)
-				mudaEstadoAtiva();
+			tempoOperacaoES = duracaoOperacaoES;
 		}
-
-		salvarEstado();
+		else if (suspensa && tempoOperacaoES > 0)
+		{
+			tempoOperacaoES--;
+			if (tempoOperacaoES == 0)
+			{
+				mudaEstadoSuspensa();
+				if (!ativa)
+					mudaEstadoAtiva();
+			}
+		}
 		prosseguir(tempoDecorrido);
 
 		if (ativa)
@@ -156,7 +205,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		if (tempoComCPU >= quantum)
 			quantumMax = true;
 
-		if (ativa)
+		if (ativa && !suspensa && !terminada)
 			tempoExecutado++;
 
 		if (tempoExecutado >= duracao && !terminada)
@@ -176,6 +225,11 @@ void Processo::setCor(RectangleShape* rect)
 	{
 		rect->setFillColor(sf::Color::Black);
 		legenda.setFillColor(sf::Color::Black);
+		//if (usaMutex || duracaoOperacaoES != -1)
+		//{
+		//	rect->setOutlineColor(sf::Color::Red);
+		//	rect->setOutlineThickness(-0.5);
+		//}
 	}
 	else if (ativa)
 	{
@@ -217,6 +271,7 @@ void Processo::salvarEstado()
 	e.tempoOcioso = tempoOcioso;
 	e.inicioOpES = inicioOperacaoES;
 	e.duracaoOpES = duracaoOperacaoES;
+	e.tempoOpES = tempoOperacaoES;
 	//e.estadoAcoes.clear();
 	/*for (const AcaoMutex& a : acoes)
 	{
@@ -251,6 +306,7 @@ void Processo::recuperaEstado()
 	tempoOcioso = e.tempoOcioso;
 	inicioOperacaoES = e.inicioOpES;
 	duracaoOperacaoES = e.duracaoOpES;
+	tempoOperacaoES = e.tempoOpES;
 	/*for (size_t i = 0;
 		i < acoes.size() && i < e.estadoAcoes.size();
 		i++)
@@ -541,7 +597,8 @@ void Processo::setDuracao(int d)
 
 void Processo::setPrioridade(int p)
 {
-	if (p > 0) {
+	if (p > 0) 
+	{
 		prioridade = p;
 		prioridadeD = p;
 	}

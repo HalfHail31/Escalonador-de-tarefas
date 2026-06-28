@@ -44,6 +44,7 @@ struct Estado
     int tempoOcioso;
     int inicioOpES;
     int duracaoOpES;
+    int tempoOpES;
     //std::vector<EstadoAcao> estadoAcoes;
 };
 
@@ -66,6 +67,7 @@ private:
     bool usaMutex; //Define se o processo faz uso de mutex
     int inicioOperacaoES; //Se o processo faz alguma operação de E/S, ela deve iniciar após a tarefa executar por x segundos
     int duracaoOperacaoES; //Se o processo faz alguma operção de E/S, ela deve encerrar após a tarefa executar por y segundos
+    int tempoOperacaoES; //Contador de tempo em que o processo executa a operação de E/S
 
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()

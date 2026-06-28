@@ -84,10 +84,10 @@ void Sistema::cedeProcessador(Processo* p)
 void Sistema::retiraProcessador(Processo* p)
 {
     //Libera a CPU associada ao processo se ele possuir um indice v�lido.
-    int idx = p->getIndiceCPU();
-    if (idx != -1 && idx >= 0 && idx < (int)processadores.size())
+    int id = p->getIndiceCPU();
+    if (id != -1 && id >= 0 && id < (int)processadores.size())
     {
-        processadores[idx]->setFillColor(sf::Color::Green);
+        processadores[id]->setFillColor(sf::Color::Green);
         //Garantir que o estado ativo fique desativado
         if (p->getAtiva())
             p->mudaEstadoAtiva();
@@ -124,7 +124,7 @@ void Sistema::executarPRIOp(int tempoDecorrido)
 
     for (int i = 0; i < tam; i++)
     {
-        if (processos[i]->getTerminada() || !processos[i]->getSuspensa()) //Retira CPUs cedidas a processos que j� terminaram ou suspenderam
+        if (processos[i]->getTerminada() || processos[i]->getSuspensa()) //Retira CPUs cedidas a processos que j� terminaram ou suspenderam
             retiraProcessador(processos[i]);
     }
 
@@ -194,7 +194,7 @@ void Sistema::executarSRTF(int tempoDecorrido)
 
     for (int i = 0; i < tam; i++)
     {
-        if (processos[i]->getTerminada()) //Retira CPUs cedidas a processos que j� terminaram
+        if (processos[i]->getTerminada() || processos[i]->getSuspensa()) //Retira CPUs cedidas a processos que j� terminaram ou suspenderam
             retiraProcessador(processos[i]);
     }
 
@@ -306,11 +306,9 @@ void Sistema::executar(int tempoDecorrido, int dir)
             {
                 processos[i]->executar(tempoDecorrido);
                 processos[i]->verificaAcoesMutex(this);
-
-                if (processos[i]->getSuspensa())
-                    verificaEscalonamento(tempoDecorrido);
             }
         }
+        verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }
 
@@ -356,8 +354,8 @@ void Sistema::verificaEscalonamento(int tempoDecorrido) //Verifica se � necess
 
     for (int i = 0; i < tam; i++) //Verifica se � necess�rio escalonar algum dos processos
     {
-        //Se a tarefa acabou de ingressar ou terminar, ou j� executou durante o tempo de um quantum, devemos chamar o escalonamento
-        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getEstadoQuantum())
+        //Se a tarefa acabou de ingressar ou terminar, suspender ou j� executou durante o tempo de um quantum, devemos chamar o escalonamento
+        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getSuspensa() || processos[i]->getEstadoQuantum())
         {
             if (algoritmo == "priop") //Escalonamento PRIOp
             {
@@ -605,17 +603,19 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
             processos[i]->executarPassos(tempoDecorrido, -1);
         }
         reconstruirMutexes();
+
+        verificaEscalonamento(tempoDecorrido);
         CPUsLivres = CPUs;
         for (int i = 0; i < CPUs; i++)
             processadores[i]->setFillColor(sf::Color::Green);
 
-        // Marcar processadores ocupados conforme indiceCPU de cada processo
+        //Marcar processadores ocupados conforme indiceCPU de cada processo
         for (int i = 0; i < tam; i++)
         {
-            int idx = processos[i]->getIndiceCPU();
-            if (idx != -1 && idx >= 0 && idx < (int)processadores.size())
+            int id = processos[i]->getIndiceCPU();
+            if (id != -1 && id >= 0 && id < (int)processadores.size())
             {
-                processadores[idx]->setFillColor(sf::Color::Red);
+                processadores[id]->setFillColor(sf::Color::Red);
                 CPUsLivres--;
             }
         }
@@ -624,20 +624,15 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left)) //Direita avan�a
     {
         avancaTempo(tempoDecorrido);
-        reconstruirMutexes();
-        verificaEscalonamento(tempoDecorrido);
-
         for (int i = 0; i < tam; i++)
         {
             processos[i]->executarPassos(tempoDecorrido, 1);
             processos[i]->verificaAcoesMutex(this);
-            if (processos[i]->getSuspensa())
-                verificaEscalonamento(tempoDecorrido);
         }
-        // Ao avan�ar no modo passo-a-passo tamb�m devemos executar o escalonador
-        // para ajustar atribui��es de CPU (cede/retira) conforme o estado restaurado.
-        //verificaEscalonamento(tempoDecorrido);
 
+        reconstruirMutexes();
+//        verificaEscalonamento(tempoDecorrido);
+        verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }
 

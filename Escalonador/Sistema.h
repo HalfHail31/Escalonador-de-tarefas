@@ -32,7 +32,6 @@ public:
     ~Sistema();
 
     void recebeProcesso(Processo* p);
-
     void cedeProcessador(Processo* p);
     void retiraProcessador(Processo* p);
     void desativaProcessadores();
