@@ -50,9 +50,9 @@ Sistema* criaSimulador(Controlador* controle)
             unsigned long int cor; //Idem
             char sep; //Vari�vel para servir de filtro e ignorar o caractere que n�o � n�mero, no caso, o ";"
             
-            int iniOpES; //Para tarefas que realizam oerações de E/S
-            int termiOpES;
-            bool realizaOpES = false;
+            //int iniOpES; //Para tarefas que realizam oerações de E/S
+            //int termiOpES;
+            //bool realizaOpES = false;
 
             std::getline(ss, id, ';');
 
@@ -63,31 +63,46 @@ Sistema* criaSimulador(Controlador* controle)
             ss >> prioridade >> sep;
 
             std::vector<AcaoMutex> acoes;
+            std::vector<OperacaoES> listaES;
             std::string token;
 
             while (std::getline(ss, token, ';'))
             {
                 AcaoMutex acao;
 
-                if (token.substr(0, 2) == "ML")
-                    acao.tipo = LOCK;
-                else if (token.substr(0, 2) == "MU")
-                    acao.tipo = UNLOCK;
+                if (token.substr(0, 2) == "ML" || token.substr(0, 2) == "MU")
+                {
+                    if (token.substr(0, 2) == "ML")
+                        acao.tipo = LOCK;
+                    else if (token.substr(0, 2) == "MU")
+                        acao.tipo = UNLOCK;
+
+                    acao.mutexId = std::stoi(token.substr(2, 2));
+
+                    acao.instante = std::stoi(token.substr(5, 2));
+
+                    acoes.push_back(acao);
+                    sist->criaMutex(acao.mutexId);
+                }
                 else if (token.substr(0, 2) == "IO")
                 {
-                    realizaOpES = true;
-                    iniOpES = std::stoi(token.substr(2, 2));
-                    termiOpES = std::stoi(token.substr(5, 2));
+                    std::stringstream ssIO(token);
+                    char separador;
+                    int inicio, duracao;
+                    //Para ler no formato IO:xx-yy
+                    ssIO >> separador >> separador;
+                    ssIO >> separador;
+                    ssIO >> inicio;
+                    ssIO >> separador;
+                    ssIO >> duracao;
+
+                    OperacaoES op;
+                    op.instanteInicio = inicio;
+                    op.duracao = duracao;
+                    listaES.push_back(op);
                 }
                 else
                     continue;
-
-                acao.mutexId = std::stoi(token.substr(2, 2));
-
-                acao.instante = std::stoi(token.substr(5, 2));
-
-                acoes.push_back(acao);
-                sist->criaMutex(acao.mutexId);
             }
 
             /*for (const auto& a : acoes)
@@ -102,10 +117,7 @@ Sistema* criaSimulador(Controlador* controle)
                     << a.instante
                     << std::endl;
             }*/
-            if (realizaOpES)
-                controle->criaProcesso(id, cor, ingresso, duracao, prioridade, iniOpES, termiOpES); //Cria processos que fazem operação de E/S
-            else
-                controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes); //Cria processos que ser�o inseridos no sistema
+            controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes, listaES); //Cria processos que ser�o inseridos no sistema
         }
         arquivo.close();
         return sist;

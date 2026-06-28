@@ -44,7 +44,7 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 		std::cout << "Erro ao criar processo de id: " << id << std::endl;
 }
 
-void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, int iniOp, int termiOp)
+void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, const std::vector<OperacaoES>& listaES)
 {
 	if (tempoDecorrido > ing)
 	{
@@ -52,10 +52,18 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 		return;
 	}
 
-	if (termiOp < 1) termiOp = 1; //Impede a tarefa de fazer uma operação por 0 segundos
-	if (iniOp < 0) termiOp = 0; //Impede a tarefa de receber início negativo para operação
+	Processo* processo = new Processo(id, c, ing, d, p, y); //Instancia um processo para esta iteração, y define sua altura y na tela
+	for (const auto& op : listaES)
+	{
+		int inicio = op.instanteInicio;
+		int duracao = op.duracao;
 
-	Processo* processo = new Processo(id, c, ing, d, p, y, iniOp, termiOp); //Instancia um processo para esta iteração, y define sua altura y na tela
+		if (duracao < 1) duracao = 1;
+		if (inicio < 0) inicio = 0;
+
+		processo->adicionaOperacaoES(inicio, duracao);
+	}
+
 
 	y++; //Incrementa para o próximo processo
 	if (processo)
@@ -95,6 +103,34 @@ void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int
 	else
 	{
 		std::cout << "Erro ao criar processo de id: " << id << std::endl;
+	}
+}
+
+void Controlador::criaProcesso(std::string id, unsigned long int c, int ing, int d, int p, const std::vector<AcaoMutex>& acoes, const std::vector<OperacaoES>& listaES)
+{
+	if (tempoDecorrido > ing)
+	{
+		std::cout << "Nao da para inserir um processo em um tempo ja decorrido" << std::endl;
+		return;
+	}
+
+	Processo* processo = new Processo(id, c, ing, d, p, y);
+
+	for (const AcaoMutex& acao : acoes)
+	{
+		processo->adicionaAcao(acao.tipo, acao.mutexId, acao.instante);
+	}
+
+	for (const auto& op : listaES)
+	{
+		processo->adicionaOperacaoES(op.instanteInicio, op.duracao);
+	}
+
+	y++;
+	if (processo)
+	{
+		sist->recebeProcesso(processo);
+		processos.push_back(processo);
 	}
 }
 
@@ -237,7 +273,7 @@ void Controlador::executar(int tempoDecorrido)
 
 		std::cin >> opcao;
 
-		if (opcao == 1)
+		/*if (opcao == 1)
 		{
 			std::stringstream ss;
 			std::cout << "Insira os dados do processo a ser criado no formato: id cor ingresso duracao prioridade" << std::endl << ">";
@@ -264,6 +300,81 @@ void Controlador::executar(int tempoDecorrido)
 			std::cout << id << " " << c << " " << ing << " " << d << " " << p << "\n";
 
 			criaProcesso(id, c, ing, d, p);
+		}*/
+
+		if (opcao == 1)
+		{
+			std::string linhaCompleta;
+			std::cout << "Insira os dados no formato: id cor(hex) ingresso duracao prioridade [Acoes Opcionais...]" << std::endl;
+			std::cout << "Exemplo de acoes opcionais: ML01@02 (Lock Mutex 1 no inst 2), IO02@04 (E/S inst 2 com duracao 4)" << std::endl;
+			std::cout << "Exemplo completo: P1 FF0000 0 10 3 ML01@02 IO03@04" << std::endl << ">";
+
+			std::cin >> std::ws; // Limpa buffers remanescentes
+			std::getline(std::cin, linhaCompleta);
+
+			std::stringstream ss(linhaCompleta);
+
+			std::string id;
+			std::string corHexStr;
+			int ing, d, p;
+
+			// Lê os 5 dados obrigatórios iniciais
+			if (ss >> id >> corHexStr >> ing >> d >> p)
+			{
+				unsigned long int c = std::stoul(corHexStr, nullptr, 16);
+
+				std::vector<AcaoMutex> acoes;
+				std::vector<OperacaoES> listaES;
+				std::string token;
+
+				while (ss >> token)
+				{
+					// Verifica se é Operação de E/S
+					if (token.substr(0, 2) == "IO" || token.substr(0, 2) == "ES")
+					{
+						size_t posSep = token.find('@');
+						if (posSep == std::string::npos) posSep = token.find('#');
+
+						if (posSep != std::string::npos)
+						{
+							OperacaoES op;
+							size_t inicioDados = (token.substr(0, 2) == "IO") ? 2 : 3;
+
+							op.instanteInicio = std::stoi(token.substr(inicioDados, posSep - inicioDados));
+							op.duracao = std::stoi(token.substr(posSep + 1));
+							listaES.push_back(op);
+						}
+					}
+					// Verifica se é ação de Mutex
+					else if (token.substr(0, 2) == "ML" || token.substr(0, 2) == "MU")
+					{
+						AcaoMutex acao;
+						acao.tipo = (token.substr(0, 2) == "ML") ? LOCK : UNLOCK;
+
+						size_t posArroba = token.find('@');
+						if (posArroba != std::string::npos)
+						{
+							acao.mutexId = std::stoi(token.substr(2, posArroba - 2));
+							acao.instante = std::stoi(token.substr(posArroba + 1));
+						}
+						else 
+						{
+							acao.mutexId = std::stoi(token.substr(2, 2));
+							acao.instante = std::stoi(token.substr(5, 2));
+						}
+
+						acoes.push_back(acao);
+						sist->criaMutex(acao.mutexId);
+					}
+				}
+
+				// Chama o método unificado que repassa ambos os vetores (mesmo vazios)
+				criaProcesso(id, c, ing, d, p, acoes, listaES);
+			}
+			else
+			{
+				std::cout << "Erro: Dados basicos incompletos!" << std::endl;
+			}
 		}
 
 		else if (opcao == 2)

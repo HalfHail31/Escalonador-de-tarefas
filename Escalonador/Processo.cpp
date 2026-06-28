@@ -4,7 +4,7 @@
 
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), inicioOperacaoES(-1), duracaoOperacaoES(-1), tempoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), /*inicioOperacaoES(-1), duracaoOperacaoES(-1), tempoOperacaoES(-1),*/ terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -21,9 +21,9 @@ ativa(false), inicioOperacaoES(-1), duracaoOperacaoES(-1), tempoOperacaoES(-1), 
 	else
 		std::cout << "Erro ao carregar fonte!" << std::endl;
 }
-
+/*
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), inicioOperacaoES(iniOpES), duracaoOperacaoES(termiOpES), tempoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), /*inicioOperacaoES(iniOpES), duracaoOperacaoES(termiOpES), tempoOperacaoES(-1), terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -39,7 +39,7 @@ ativa(false), inicioOperacaoES(iniOpES), duracaoOperacaoES(termiOpES), tempoOper
 	}
 	else
 		std::cout << "Erro ao carregar fonte!" << std::endl;
-}
+}*/
 
 Processo::~Processo()
 {
@@ -109,13 +109,18 @@ void Processo::executar(int tempoDecorrido)
 
 	if (!iniciada)
 		iniciada = true;
-	
-	if (!suspensa && ativa && inicioOperacaoES != -1 && tempoExecutado == inicioOperacaoES)
+
+	salvarEstado();
+	if (!suspensa && ativa) //Se não está suspensa, verifica se existem operações de E/S
 	{
-		mudaEstadoSuspensa();
-		tempoOperacaoES = duracaoOperacaoES;
+		if (!operacoesES.empty() && tempoExecutado == operacoesES.front().instanteInicio) //Se existir uma operação E/S pendente, deve ser realizada
+		{
+			mudaEstadoSuspensa();
+			tempoOperacaoES = operacoesES.front().duracao;
+			operacoesES.pop();
+		}
 	}
-	else if (suspensa && tempoOperacaoES > 0)
+	else if (suspensa && tempoOperacaoES > 0) //Tarefa executando operação E/S fica inativa por um tempo
 	{
 		tempoOperacaoES--;
 		if (tempoOperacaoES == 0)
@@ -125,8 +130,6 @@ void Processo::executar(int tempoDecorrido)
 				mudaEstadoAtiva();
 		}
 	}
-	
-	salvarEstado();
 	prosseguir(tempoDecorrido);
 
 	if (ativa)
@@ -158,6 +161,8 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		indiceCPU = -1;
 		quantumMax = false;
 		tempoOperacaoES = -1;
+		while (!operacoesES.empty())
+			operacoesES.pop();
 		int sz = (int)tamanho.size();
 		for (int i = 0; i < sz; i++)
 			delete tamanho[i];
@@ -180,12 +185,16 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 	else if (dir == 1)
 	{
 		salvarEstado();
-		if (!suspensa && ativa && inicioOperacaoES != -1 && tempoExecutado == inicioOperacaoES)
+		if (!suspensa && ativa) //Se não está suspensa, verifica se existem operações de E/S
 		{
-			mudaEstadoSuspensa();
-			tempoOperacaoES = duracaoOperacaoES;
+			if (!operacoesES.empty() && tempoExecutado == operacoesES.front().instanteInicio) //Se existir uma operação E/S pendente, deve ser realizada
+			{
+				mudaEstadoSuspensa();
+				tempoOperacaoES = operacoesES.front().duracao;
+				operacoesES.pop();
+			}
 		}
-		else if (suspensa && tempoOperacaoES > 0)
+		else if (suspensa && tempoOperacaoES > 0) //Tarefa executando operação E/S fica inativa por um tempo
 		{
 			tempoOperacaoES--;
 			if (tempoOperacaoES == 0)
@@ -220,16 +229,10 @@ void Processo::setCor(RectangleShape* rect)
 		rect->setFillColor(sf::Color::Blue);
 		legenda.setFillColor(sf::Color::Blue);
 	}
-
-	if (suspensa)
+	else if (suspensa)
 	{
 		rect->setFillColor(sf::Color::Black);
 		legenda.setFillColor(sf::Color::Black);
-		//if (usaMutex || duracaoOperacaoES != -1)
-		//{
-		//	rect->setOutlineColor(sf::Color::Red);
-		//	rect->setOutlineThickness(-0.5);
-		//}
 	}
 	else if (ativa)
 	{
@@ -267,11 +270,19 @@ void Processo::salvarEstado()
 	e.indiceCPU = indiceCPU;
 	e.quantumMax = quantumMax;
 	e.posX = posX;
-	e.prioridadeD = prioridadeD;
+	e.prioridadeD = prioridadeD; //Segundo a IA, aqui é prioridadeD = e.prioridadeD
 	e.tempoOcioso = tempoOcioso;
-	e.inicioOpES = inicioOperacaoES;
-	e.duracaoOpES = duracaoOperacaoES;
+	//e.inicioOpES = inicioOperacaoES;
+	//e.duracaoOpES = duracaoOperacaoES;
 	e.tempoOpES = tempoOperacaoES;
+
+	e.operacoesESRestantes.clear();
+	std::queue<OperacaoES> copiaFila = operacoesES;
+	while (!copiaFila.empty()) //Salva a fila de operações E/S
+	{
+		e.operacoesESRestantes.push_back(copiaFila.front());
+		copiaFila.pop();
+	}
 	//e.estadoAcoes.clear();
 	/*for (const AcaoMutex& a : acoes)
 	{
@@ -304,9 +315,19 @@ void Processo::recuperaEstado()
 	posX = e.posX;
 	prioridadeD = e.prioridadeD;
 	tempoOcioso = e.tempoOcioso;
-	inicioOperacaoES = e.inicioOpES;
-	duracaoOperacaoES = e.duracaoOpES;
+	//inicioOperacaoES = e.inicioOpES;
+	//duracaoOperacaoES = e.duracaoOpES;
 	tempoOperacaoES = e.tempoOpES;
+
+	while (!operacoesES.empty()) //Recupera a fila de operações de E/S
+	{
+		operacoesES.pop();
+	}
+	for (const auto& op : e.operacoesESRestantes)
+	{
+		operacoesES.push(op);
+	}
+
 	/*for (size_t i = 0;
 		i < acoes.size() && i < e.estadoAcoes.size();
 		i++)
@@ -570,6 +591,14 @@ void Processo::verificaAcoesMutex(Sistema* sistema)
 		}
 		acao.executada = true;
 	}
+}
+
+void Processo::adicionaOperacaoES(int inicio, int duracao)
+{
+	OperacaoES opES;
+	opES.instanteInicio = inicio;
+	opES.duracao = duracao;
+	operacoesES.push(opES);
 }
 
 std::string Processo::getId()

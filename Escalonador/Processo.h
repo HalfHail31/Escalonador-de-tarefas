@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <string>
 #include <vector>
+#include <queue>
 #define TAM 10
 
 
@@ -23,6 +24,11 @@ struct AcaoMutex
     bool executada = false;
 };
 
+struct OperacaoES
+{
+    int instanteInicio;
+    int duracao;
+};
 /*struct EstadoAcao
 {
     bool executada;
@@ -45,6 +51,7 @@ struct Estado
     int inicioOpES;
     int duracaoOpES;
     int tempoOpES;
+    std::vector<OperacaoES> operacoesESRestantes;
     //std::vector<EstadoAcao> estadoAcoes;
 };
 
@@ -65,9 +72,10 @@ private:
     int indiceCPU; //�ndice da CPU recebida para executar
     std::vector<AcaoMutex> acoes;
     bool usaMutex; //Define se o processo faz uso de mutex
-    int inicioOperacaoES; //Se o processo faz alguma operação de E/S, ela deve iniciar após a tarefa executar por x segundos
-    int duracaoOperacaoES; //Se o processo faz alguma operção de E/S, ela deve encerrar após a tarefa executar por y segundos
+    //int inicioOperacaoES; //Se o processo faz alguma operação de E/S, ela deve iniciar após a tarefa executar por x segundos
+    //int duracaoOperacaoES; //Se o processo faz alguma operção de E/S, ela deve encerrar após a tarefa executar por y segundos
     int tempoOperacaoES; //Contador de tempo em que o processo executa a operação de E/S
+    std::queue<OperacaoES> operacoesES; //Permite que uma mesma tarefa faça várias operações de E/S (FIFO)
 
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()
@@ -90,7 +98,7 @@ private:
 
 public:
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
-    Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES);
+    //Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES);
     ~Processo();
 
     void desenha(RenderWindow* window);
@@ -130,6 +138,7 @@ public:
     void incrementaTempoOcioso();
     void resetaEnvelhecimento();
     void verificaAcoesMutex(Sistema* sistema);
+    void adicionaOperacaoES(int inicio, int duracao);
 
     std::string getId(); //Fun��es para editar uma tarefa
     void setCor(unsigned long int cor);
