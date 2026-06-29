@@ -195,6 +195,7 @@ void Controlador::exibeInformacoes()
 		int ingresso = processos[i]->getIngresso();
 		int duracao = processos[i]->getDuracao();
 		int termino = processos[i]->getTermino();
+		int tempoExecutada = processos[i]->getTempoExecutado();
 		int prioridade = processos[i]->getPrioridadeD();
 		int estadoQuantum = processos[i]->getTempoComCPU();
 		bool ativa = processos[i]->getAtiva();
@@ -233,6 +234,7 @@ void Controlador::exibeInformacoes()
 		else
 		{
 			std::cout << "Status terminada: NAO" << std::endl;
+			std::cout << "Tempo executada: " << tempoExecutada << std::endl;
 			std::cout << "Tempo restante para terminar: " << tempoRestante << std::endl;
 		}
 

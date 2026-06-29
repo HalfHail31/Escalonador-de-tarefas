@@ -160,7 +160,9 @@ void Sistema::executarPRIOp(int tempoDecorrido)
         }
 
         if (CPUsLivres > 0) //Se tiver CPUs livres, pode ceder uma para o priorit�rio
+        {
             cedeProcessador(processos[prioritario]);
+        }
 
         else if (CPUsLivres == 0) //S� pode retirar CPUs se nenhuma CPU estiver livre e existirem processos inativos
         {
@@ -314,7 +316,6 @@ void Sistema::executar(int tempoDecorrido, int dir)
                 processos[i]->verificaAcoesMutex(this);
             }
         }
-        //if (precisaEscalonar)
         verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }
@@ -362,19 +363,19 @@ void Sistema::verificaEscalonamento(int tempoDecorrido) //Verifica se � necess
     for (int i = 0; i < tam; i++) //Verifica se � necess�rio escalonar algum dos processos
     {
         //Se a tarefa acabou de ingressar ou terminar, suspender, sair da suspensão ou já executou durante o tempo de um quantum, devemos chamar o escalonamento
-        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getSuspensa() || processos[i]->getSaiuSuspensao() == tempoDecorrido || processos[i]->getEstadoQuantum())
+        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getAcabouDeSuspender() || processos[i]->getSaiuSuspensao() == tempoDecorrido || processos[i]->getEstadoQuantum())
         {
             if (algoritmo == "priop") //Escalonamento PRIOp
             {
                 std::cout << "Escalonando com PRIOp" << std::endl;
                 executarPRIOp(tempoDecorrido);
-                //break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
+                break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
             }
             else if (algoritmo == "srtf") //Escalonamento SRTF
             {
                 std::cout << "Escalonando com SRTF" << std::endl;
                 executarSRTF(tempoDecorrido);
-                //break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
+                break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
             }
         }
     }

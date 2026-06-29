@@ -4,7 +4,7 @@
 
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), terminada(false), suspensa(false), terminoSuspensao(-1), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), terminada(false), suspensa(false), terminoSuspensao(-1), indiceES(0), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -101,7 +101,7 @@ void Processo::desenha(RenderWindow* window) //Desenha o processo
 		window->draw(legenda);
 	}
 }
-
+/*
 void Processo::executar(int tempoDecorrido)
 {
 	if (tempoDecorrido < ingresso || terminada)
@@ -109,27 +109,6 @@ void Processo::executar(int tempoDecorrido)
 	
 	if (!iniciada)
 		iniciada = true;
-
-	salvarEstado();
-	if (!suspensa && ativa) //Se não está suspensa, verifica se existem operações de E/S
-	{
-		if (!operacoesES.empty() && tempoExecutado == operacoesES.front().instanteInicio) //Se existir uma operação E/S pendente, deve ser realizada
-		{
-			mudaEstadoSuspensa();
-			tempoOperacaoES = operacoesES.front().duracao;
-			operacoesES.pop();
-		}
-	}
-	else if (suspensa && tempoOperacaoES > 0) //Tarefa executando operação E/S fica inativa por um tempo
-	{
-		tempoOperacaoES--;
-		if (tempoOperacaoES == 0)
-		{
-			mudaEstadoSuspensa();
-			terminoSuspensao = tempoDecorrido;
-		}
-	}
-	prosseguir(tempoDecorrido);
 
 	if (ativa)
 		tempoComCPU++;
@@ -142,10 +121,81 @@ void Processo::executar(int tempoDecorrido)
 	if (ativa && !suspensa && !terminada)
 		tempoExecutado++;
 
+	salvarEstado();
+	prosseguir(tempoDecorrido);
+
 	if (tempoExecutado >= duracao && !terminada)
+	{
+		termina(tempoDecorrido);
+		return;
+	}
+
+	if (!suspensa && ativa) //Se não está suspensa, verifica se existem operações de E/S
+	{
+		if (!operacoesES.empty() && tempoExecutado >= operacoesES[0].instanteInicio && operacoesES[0].instanteInicio <= tempoExecutado) //Se existir uma operação E/S pendente, deve ser realizada
+		{
+			mudaEstadoSuspensa();
+			tempoOperacaoES = operacoesES.front().duracao;
+			operacoesES.erase(operacoesES.begin());
+		}
+	}
+	else if (suspensa && tempoOperacaoES > 0) //Tarefa executando operação E/S fica inativa por um tempo
+	{
+		tempoOperacaoES--;
+		if (tempoOperacaoES == 0)
+		{
+			mudaEstadoSuspensa();
+			terminoSuspensao = tempoDecorrido;
+		}
+	}
+}*/
+
+void Processo::executar(int tempoDecorrido)
+{
+	if (tempoDecorrido < ingresso || terminada)
+		return;
+
+	if (!iniciada)
+		iniciada = true;
+
+	if (ativa)
+		tempoComCPU++;
+	else
+		resetaQuantum();
+
+	if (tempoComCPU >= quantum)
+		quantumMax = true;
+
+	if (ativa && !suspensa)
+		tempoExecutado++;
+
+	
+	prosseguir(tempoDecorrido);salvarEstado();
+
+	if (!suspensa && ativa)
+	{
+		if (!operacoesES.empty() &&
+			tempoExecutado >= operacoesES[0].instanteInicio)
+		{
+			mudaEstadoSuspensa();
+			tempoOperacaoES = operacoesES.front().duracao;
+			operacoesES.erase(operacoesES.begin());
+		}
+	}
+	else if (suspensa && tempoOperacaoES > 0)
+	{
+		tempoOperacaoES--;
+		if (tempoOperacaoES == 0)
+		{
+			mudaEstadoSuspensa();
+			terminoSuspensao = tempoDecorrido;
+		}
+	}
+
+	if (tempoExecutado >= duracao)
 		termina(tempoDecorrido);
 }
-
+/*
 void Processo::executarPassos(int tempoDecorrido, int dir)
 {
 	if (tempoDecorrido < ingresso) //Correção de alguns problemas com lixo de memória ao retroceder até 0
@@ -161,7 +211,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		quantumMax = false;
 		tempoOperacaoES = -1;
 		while (!operacoesES.empty())
-			operacoesES.pop();
+			operacoesES.erase(operacoesES.begin());
 		int sz = (int)tamanho.size();
 		for (int i = 0; i < sz; i++)
 			delete tamanho[i];
@@ -183,14 +233,22 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		retroceder(tempoDecorrido);
 	else if (dir == 1)
 	{
-		salvarEstado();
+
+
+		if (tempoExecutado >= duracao && !terminada)
+		{
+			termina(tempoDecorrido);
+			return;
+		}
+
+
 		if (!suspensa && ativa) //Se não está suspensa, verifica se existem operações de E/S
 		{
-			if (!operacoesES.empty() && tempoExecutado == operacoesES.front().instanteInicio) //Se existir uma operação E/S pendente, deve ser realizada
+			if (!operacoesES.empty() && tempoExecutado >= operacoesES[0].instanteInicio && operacoesES[0].instanteInicio <= tempoExecutado) //Se existir uma operação E/S pendente, deve ser realizada
 			{
 				mudaEstadoSuspensa();
 				tempoOperacaoES = operacoesES.front().duracao;
-				operacoesES.pop();
+				operacoesES.erase(operacoesES.begin());
 			}
 		}
 		else if (suspensa && tempoOperacaoES > 0) //Tarefa executando operação E/S fica inativa por um tempo
@@ -202,8 +260,6 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 				terminoSuspensao = tempoDecorrido;
 			}
 		}
-		prosseguir(tempoDecorrido);
-
 		if (ativa)
 			tempoComCPU++;
 		else
@@ -215,11 +271,49 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		if (ativa && !suspensa && !terminada)
 			tempoExecutado++;
 
-		if (tempoExecutado >= duracao && !terminada)
-			termina(tempoDecorrido);
+		prosseguir(tempoDecorrido);
+		salvarEstado();
 	}
 	if (tempoExecutado == 0)
 		legenda.setFillColor(sf::Color::Transparent); //Oculta a legenda caso retroceda até a tarefa não ter iniciado
+}*/
+void Processo::executarPassos(int tempoDecorrido, int dir)
+{
+	if (tempoDecorrido < ingresso)
+	{
+		iniciada = false;
+		ativa = false;
+		terminada = false;
+		suspensa = false;
+		tempoExecutado = 0;
+		tempoComCPU = 0;
+		termino = -1;
+		indiceCPU = -1;
+		quantumMax = false;
+		tempoOperacaoES = -1;
+
+		while (!operacoesES.empty())
+			operacoesES.erase(operacoesES.begin());
+
+		for (auto* r : tamanho)
+			delete r;
+
+		tamanho.clear();
+		historico.clear();
+
+		posX = ingresso * TAM;
+		return;
+	}
+
+	if (dir == -1)
+	{
+		if (historico.empty())
+			return;
+
+		retroceder(tempoDecorrido);
+	}
+	else if (dir == 1)
+		executar(tempoDecorrido);
 }
 
 void Processo::setCor(RectangleShape* rect)
@@ -248,7 +342,8 @@ void Processo::setCor(RectangleShape* rect)
 
 void Processo::prosseguir(int tempoDecorrido)
 {
-	posX = tempoDecorrido * TAM;
+	//posX = tempoDecorrido * TAM;
+	posX = (tempoDecorrido - ingresso) * TAM;
 	RectangleShape* rect = new RectangleShape;
 
 	rect->setSize(Vector2f(TAM, TAM));
@@ -275,11 +370,9 @@ void Processo::salvarEstado()
 	e.tempoOpES = tempoOperacaoES;
 
 	e.operacoesESRestantes.clear();
-	std::queue<OperacaoES> copiaFila = operacoesES;
-	while (!copiaFila.empty()) //Salva a fila de operações E/S
+	for (const auto& op : operacoesES)
 	{
-		e.operacoesESRestantes.push_back(copiaFila.front());
-		copiaFila.pop();
+		e.operacoesESRestantes.push_back(op);
 	}
 	//e.estadoAcoes.clear();
 	/*for (const AcaoMutex& a : acoes)
@@ -315,13 +408,10 @@ void Processo::recuperaEstado()
 	tempoOcioso = e.tempoOcioso;
 	tempoOperacaoES = e.tempoOpES;
 
-	while (!operacoesES.empty()) //Recupera a fila de operações de E/S
-	{
-		operacoesES.pop();
-	}
+	operacoesES.clear();
 	for (const auto& op : e.operacoesESRestantes)
 	{
-		operacoesES.push(op);
+		operacoesES.push_back(op);
 	}
 
 	/*for (size_t i = 0;
@@ -338,14 +428,14 @@ void Processo::retroceder(int tempoDecorrido)
 	if (terminada && tempoDecorrido > termino) //Uma tarefa terminada só recupera estado no momento em que terminou
 		return;
 
-	int size = (int)tamanho.size();
-	if (size == 0)
+	if (historico.empty())
 		return;
 
 	delete tamanho.back();
 	tamanho.pop_back();
 
 	recuperaEstado();
+	//posX = tempoDecorrido * TAM;
 
 	//if (terminada)
 		//legenda.setFillColor(sf::Color::Blue);
@@ -356,8 +446,8 @@ void Processo::retroceder(int tempoDecorrido)
 	else
 		legenda.setFillColor(sf::Color::White);
 
-	if (tamanho.empty())
-		posX = ingresso * TAM;
+	//if (tamanho.empty())
+		//posX = ingresso * TAM;
 }
 
 void Processo::mudaEstadoAtiva()
@@ -449,9 +539,11 @@ const int Processo::getIngresso()
 	return ingresso;
 }
 
-const bool Processo::getSuspensa()
+const bool Processo::getAcabouDeSuspender()
 {
-	return suspensa;
+	if (suspensa && !operacoesES.empty() && tempoExecutado == operacoesES.front().instanteInicio)
+		return true;
+	return false;
 }
 
 const int Processo::getTempoComCPU()
@@ -477,6 +569,11 @@ const int Processo::getTermino()
 const int Processo::getEstadoQuantum()
 {
 	return quantumMax;
+}
+
+const bool Processo::getSuspensa()
+{
+	return suspensa;
 }
 
 void Processo::setQuantum(int q)
@@ -599,7 +696,7 @@ void Processo::adicionaOperacaoES(int inicio, int duracao)
 	OperacaoES opES;
 	opES.instanteInicio = inicio;
 	opES.duracao = duracao;
-	operacoesES.push(opES);
+	operacoesES.push_back(opES);
 }
 
 std::string Processo::getId()
