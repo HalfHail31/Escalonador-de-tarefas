@@ -10,14 +10,14 @@
 
 Sistema* criaSimulador(Controlador* controle)
 {
-    std::string sistema; //Linha dedicada � leitura dos dados do sistema
-    std::string processo; //Linhas dedicadas � leitura dos dados dos processos
+    std::string sistema; //Linha dedicada à leitura dos dados do sistema
+    std::string processo; //Linhas dedicadas à leitura dos dados dos processos
 
     std::string arq;// = "Processo.txt";
     std::cout << "Insira o nome do arquivo a ser lido" << std::endl << "Exemplo: arquivo.txt" << std::endl << ">";
     std::cin >> arq;
 
-    std::ifstream arquivo(arq); //Nome padr�o da entrada
+    std::ifstream arquivo(arq);
     int y = 0; //Contador de linhas para instanciar processos em valores y distintos da tela
 
     if (arquivo.is_open())
@@ -25,13 +25,13 @@ Sistema* criaSimulador(Controlador* controle)
         std::getline(arquivo, sistema); //Armazena o conte�do da primeira linha em sistema
         std::stringstream ss(sistema); //stringstream, serve para ler strings de arquivos e converter para diferentes tipos
 
-        int quantum, cpus; //Vari�veis para instanciar Sistema
-        char sep; //Vari�vel para servir de filtro e ignorar o caractere que n�o � n�mero, no caso, o ";"
-        std::string algoritmo; // Algoritmo a ser usado pelo sistema
+        int quantum, cpus; //Variáveis para instanciar Sistema
+        char sep; //Variável para servir de filtro e ignorar o caractere que não é número, no caso, o ";"
+        std::string algoritmo; //Algoritmo a ser usado pelo sistema
 
         std::getline(ss, algoritmo, ';'); //Anota a string para escolher o algoritmo
 
-        // Converte para min�sculo
+        //Converte para minúsculo
         std::transform(
             algoritmo.begin(),
             algoritmo.end(),
@@ -39,8 +39,8 @@ Sistema* criaSimulador(Controlador* controle)
             ::tolower
         );
 
-        ss >> quantum >> sep; //Anota n�meros antes de ; em quantum
-        ss >> cpus >> sep; //Anota n�meros antes de ; em cpus
+        ss >> quantum >> sep; //Anota números antes de ; em quantum
+        ss >> cpus >> sep; //Anota números antes de ; em cpus
         Sistema* sist = new Sistema(algoritmo, quantum, cpus); //Instancia o sistema com os valores recolhidos
         controle->setSistema(sist); //Para controlar e consultar os dados do sistema
 
@@ -48,18 +48,14 @@ Sistema* criaSimulador(Controlador* controle)
         {
             std::stringstream ss(processo);
             std::string id;
-            int ingresso, duracao, prioridade; //Vari�veis para instanciar Processos
+            int ingresso, duracao, prioridade; //Variáveis para instanciar Processos
             unsigned long int cor; //Idem
-            char sep; //Vari�vel para servir de filtro e ignorar o caractere que n�o � n�mero, no caso, o ";"
-
-            //int iniOpES; //Para tarefas que realizam oerações de E/S
-            //int termiOpES;
-            //bool realizaOpES = false;
+            char sep; //Variável para servir de filtro e ignorar o caractere que não é n�mero, no caso, o ";"
 
             std::getline(ss, id, ';');
 
             //ss >> id >> sep;
-            ss >> std::hex >> cor >> std::dec >> sep; //Aceita valor em hexadecimal, letras passam a serem vistas como n�meros para sep n�o parar em uma letra
+            ss >> std::hex >> cor >> std::dec >> sep; //Aceita valor em hexadecimal, letras passam a serem vistas como números para sep não parar em uma letra
             ss >> ingresso >> sep;
             ss >> duracao >> sep;
             ss >> prioridade >> sep;
@@ -119,7 +115,7 @@ Sistema* criaSimulador(Controlador* controle)
                     << a.instante
                     << std::endl;
             }*/
-            controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes, listaES); //Cria processos que ser�o inseridos no sistema
+            controle->criaProcesso(id, cor, ingresso, duracao, prioridade, acoes, listaES); //Cria processos que serão inseridos no sistema
         }
         arquivo.close();
         return sist;

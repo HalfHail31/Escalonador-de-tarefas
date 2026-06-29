@@ -4,7 +4,7 @@
 
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(p),
-ativa(false), /*inicioOperacaoES(-1), duracaoOperacaoES(-1), tempoOperacaoES(-1),*/ terminada(false), suspensa(false), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), terminada(false), suspensa(false), terminoSuspensao(-1), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -66,7 +66,7 @@ void Processo::desenha(RenderWindow* window) //Desenha o processo
 
 			sf::Color corGrade(sf::Color::Red);
 
-			if (usaMutex)
+			if (usaMutex && tempoExecutado >= getAcoes().back().instante) //Cerquilha azul se a suspensão for por mutex
 				corGrade = sf::Color::Blue;
 
 			float tercoX = sizeRect.x / 3.0f;
@@ -106,7 +106,7 @@ void Processo::executar(int tempoDecorrido)
 {
 	if (tempoDecorrido < ingresso || terminada)
 		return;
-
+	
 	if (!iniciada)
 		iniciada = true;
 
@@ -126,8 +126,7 @@ void Processo::executar(int tempoDecorrido)
 		if (tempoOperacaoES == 0)
 		{
 			mudaEstadoSuspensa();
-			if (!ativa)
-				mudaEstadoAtiva();
+			terminoSuspensao = tempoDecorrido;
 		}
 	}
 	prosseguir(tempoDecorrido);
@@ -200,8 +199,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 			if (tempoOperacaoES == 0)
 			{
 				mudaEstadoSuspensa();
-				if (!ativa)
-					mudaEstadoAtiva();
+				terminoSuspensao = tempoDecorrido;
 			}
 		}
 		prosseguir(tempoDecorrido);
@@ -220,6 +218,8 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		if (tempoExecutado >= duracao && !terminada)
 			termina(tempoDecorrido);
 	}
+	if (tempoExecutado == 0)
+		legenda.setFillColor(sf::Color::Transparent); //Oculta a legenda caso retroceda até a tarefa não ter iniciado
 }
 
 void Processo::setCor(RectangleShape* rect)
@@ -270,10 +270,8 @@ void Processo::salvarEstado()
 	e.indiceCPU = indiceCPU;
 	e.quantumMax = quantumMax;
 	e.posX = posX;
-	e.prioridadeD = prioridadeD; //Segundo a IA, aqui é prioridadeD = e.prioridadeD
+	e.prioridadeD = prioridadeD;
 	e.tempoOcioso = tempoOcioso;
-	//e.inicioOpES = inicioOperacaoES;
-	//e.duracaoOpES = duracaoOperacaoES;
 	e.tempoOpES = tempoOperacaoES;
 
 	e.operacoesESRestantes.clear();
@@ -315,8 +313,6 @@ void Processo::recuperaEstado()
 	posX = e.posX;
 	prioridadeD = e.prioridadeD;
 	tempoOcioso = e.tempoOcioso;
-	//inicioOperacaoES = e.inicioOpES;
-	//duracaoOperacaoES = e.duracaoOpES;
 	tempoOperacaoES = e.tempoOpES;
 
 	while (!operacoesES.empty()) //Recupera a fila de operações de E/S
@@ -406,6 +402,11 @@ void Processo::exibeAcoes()
 			<< a.instante
 			<< std::endl;
 	}
+}
+
+const int Processo::getSaiuSuspensao()
+{
+	return terminoSuspensao;
 }
 
 const bool Processo::getAtiva()

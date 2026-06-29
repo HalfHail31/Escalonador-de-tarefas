@@ -48,8 +48,6 @@ struct Estado
     int posX;
     int prioridadeD;
     int tempoOcioso;
-    int inicioOpES;
-    int duracaoOpES;
     int tempoOpES;
     std::vector<OperacaoES> operacoesESRestantes;
     //std::vector<EstadoAcao> estadoAcoes;
@@ -85,6 +83,7 @@ private:
     bool iniciada; //Define se o processo já iniciou, isto é, ingressou no Sistema
     bool suspensa; ///Define se o processo est� suspenso
     bool recebeuMutex; //Define se possui mutex
+    int terminoSuspensao; //Uma tarefa pode avisar que acabou de sair de sua suspensão
 
     int tempoExecutado; //Registra por quanto tempo uma tarefa esteve ativa, para definir se ela j� terminou sua execu��o
     int tempoComCPU; //Para contar o tempo para a passagem do quantum
@@ -98,7 +97,6 @@ private:
 
 public:
     Processo(std::string i, unsigned long int c, int ing, int d, int p, int y);
-    //Processo(std::string i, unsigned long int c, int ing, int d, int p, int y, int iniOpES, int termiOpES);
     ~Processo();
 
     void desenha(RenderWindow* window);
@@ -114,6 +112,7 @@ public:
     void termina(int tempoDecorrido);
     void adicionaAcao(TipoAcao tipo, int mutexId, int instante);
     void exibeAcoes();
+    const int getSaiuSuspensao();
 
     const bool getAtiva();
     const bool getIniciada();

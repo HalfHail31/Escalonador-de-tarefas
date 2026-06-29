@@ -100,7 +100,8 @@ void Sistema::desativaProcessadores()
 {
     sf::Color cinza(0x898989FF);
 
-    for (int i = 0; i < CPUs; i++) {
+    for (int i = 0; i < CPUs; i++)
+    {
         if (processadores[i]->getFillColor() == sf::Color::Green)
         {
             processadores[i]->setFillColor(cinza);
@@ -140,8 +141,8 @@ void Sistema::executarPRIOp(int tempoDecorrido)
 
         for (int j = 0; j < tam; j++) //Percorre a lista de processos
         {
-            //Busca os processos iniciados e sem CPUs
-            if (tempoDecorrido >= processos[j]->getIngresso() && !processos[j]->getTerminada() && !processos[j]->getAtiva())
+            //Busca os processos iniciados, não suspensos e sem CPUs
+            if (tempoDecorrido >= processos[j]->getIngresso() && !processos[j]->getAtiva() && !processos[j]->getTerminada() && !processos[j]->getAtiva() && !processos[j]->getSuspensa())
             {
                 if (prioritario == -1 || processos[j]->getPrioridade() > processos[prioritario]->getPrioridade())
                     prioritario = j;
@@ -172,9 +173,14 @@ void Sistema::executarPRIOp(int tempoDecorrido)
                     //Busca aquele com a menor prioridade
                     if (menorPrioridade == -1 || processos[j]->getPrioridade() < processos[menorPrioridade]->getPrioridade())
                         menorPrioridade = j;
+                    else if (processos[j]->getPrioridade() == processos[menorPrioridade]->getPrioridade())
+                    {
+                        if (desempate(processos[menorPrioridade], processos[j]))
+                            menorPrioridade = j;
+                    }
                 }
             }
-
+            
             if (menorPrioridade != -1 && processos[prioritario]->getPrioridade() > processos[menorPrioridade]->getPrioridade())
             {
                 //Se a menor prioridade for menor que o priorit�rio, seu processador ser� removido e entregue ao priorit�rio
@@ -209,10 +215,10 @@ void Sistema::executarSRTF(int tempoDecorrido)
     {
         int menor = -1;
 
-        //Busca o processo com menor tempo restante
+        //Busca o processo iniciado, não suspenso e com menor tempo restante
         for (int j = 0; j < tam; j++)
         {
-            if (tempoDecorrido >= processos[j]->getIngresso() && !processos[j]->getTerminada() && !processos[j]->getAtiva())
+            if (tempoDecorrido >= processos[j]->getIngresso() && !processos[j]->getTerminada() && !processos[j]->getAtiva() && !processos[j]->getSuspensa())
             {
                 if (menor == -1 || processos[j]->getTempoRestante() < processos[menor]->getTempoRestante())
                     menor = j;
@@ -308,6 +314,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
                 processos[i]->verificaAcoesMutex(this);
             }
         }
+        //if (precisaEscalonar)
         verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }
@@ -354,20 +361,20 @@ void Sistema::verificaEscalonamento(int tempoDecorrido) //Verifica se � necess
 
     for (int i = 0; i < tam; i++) //Verifica se � necess�rio escalonar algum dos processos
     {
-        //Se a tarefa acabou de ingressar ou terminar, suspender ou j� executou durante o tempo de um quantum, devemos chamar o escalonamento
-        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getSuspensa() || processos[i]->getEstadoQuantum())
+        //Se a tarefa acabou de ingressar ou terminar, suspender, sair da suspensão ou já executou durante o tempo de um quantum, devemos chamar o escalonamento
+        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getSuspensa() || processos[i]->getSaiuSuspensao() == tempoDecorrido || processos[i]->getEstadoQuantum())
         {
             if (algoritmo == "priop") //Escalonamento PRIOp
             {
                 std::cout << "Escalonando com PRIOp" << std::endl;
                 executarPRIOp(tempoDecorrido);
-                break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
+                //break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
             }
             else if (algoritmo == "srtf") //Escalonamento SRTF
             {
                 std::cout << "Escalonando com SRTF" << std::endl;
                 executarSRTF(tempoDecorrido);
-                break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
+                //break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
             }
         }
     }
@@ -631,7 +638,6 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
         }
 
         reconstruirMutexes();
-//        verificaEscalonamento(tempoDecorrido);
         verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }

@@ -273,43 +273,13 @@ void Controlador::executar(int tempoDecorrido)
 
 		std::cin >> opcao;
 
-		/*if (opcao == 1)
-		{
-			std::stringstream ss;
-			std::cout << "Insira os dados do processo a ser criado no formato: id cor ingresso duracao prioridade" << std::endl << ">";
-			std::cin >> std::ws;
-			std::cin >> std::dec >> id >> std::hex >> c >> std::dec >> ing >> d >> p;
-			while (std::getline(ss, token, ';'))
-			{
-				AcaoMutex acao;
-
-				if (token.substr(0, 2) == "ML")
-					acao.tipo = LOCK;
-				else if (token.substr(0, 2) == "MU")
-					acao.tipo = UNLOCK;
-				else
-					continue;
-
-				acao.mutexId = std::stoi(token.substr(2, 2));
-
-				acao.instante = std::stoi(token.substr(5, 2));
-
-				acoes.push_back(acao);
-				sist->criaMutex(acao.mutexId);
-			}
-			std::cout << id << " " << c << " " << ing << " " << d << " " << p << "\n";
-
-			criaProcesso(id, c, ing, d, p);
-		}*/
-
 		if (opcao == 1)
 		{
 			std::string linhaCompleta;
-			std::cout << "Insira os dados no formato: id cor(hex) ingresso duracao prioridade [Acoes Opcionais...]" << std::endl;
-			std::cout << "Exemplo de acoes opcionais: ML01@02 (Lock Mutex 1 no inst 2), IO02@04 (E/S inst 2 com duracao 4)" << std::endl;
-			std::cout << "Exemplo completo: P1 FF0000 0 10 3 ML01@02 IO03@04" << std::endl << ">";
+			std::cout << "Insira os dados no formato: id cor(hex) ingresso duracao prioridade evento" << std::endl;
+			std::cout << "Exemplo de evento: ML01:02, IO:02-04" << std::endl << ">";
 
-			std::cin >> std::ws; // Limpa buffers remanescentes
+			std::cin >> std::ws; //Limpa buffers remanescentes
 			std::getline(std::cin, linhaCompleta);
 
 			std::stringstream ss(linhaCompleta);
@@ -318,7 +288,6 @@ void Controlador::executar(int tempoDecorrido)
 			std::string corHexStr;
 			int ing, d, p;
 
-			// Lê os 5 dados obrigatórios iniciais
 			if (ss >> id >> corHexStr >> ing >> d >> p)
 			{
 				unsigned long int c = std::stoul(corHexStr, nullptr, 16);
@@ -329,8 +298,8 @@ void Controlador::executar(int tempoDecorrido)
 
 				while (ss >> token)
 				{
-					// Verifica se é Operação de E/S
-					if (token.substr(0, 2) == "IO" || token.substr(0, 2) == "ES")
+					if (token.substr(0, 2) == "IO") //Verifica se é Operação de E/S
+
 					{
 						size_t posSep = token.find('@');
 						if (posSep == std::string::npos) posSep = token.find('#');
@@ -345,8 +314,7 @@ void Controlador::executar(int tempoDecorrido)
 							listaES.push_back(op);
 						}
 					}
-					// Verifica se é ação de Mutex
-					else if (token.substr(0, 2) == "ML" || token.substr(0, 2) == "MU")
+					else if (token.substr(0, 2) == "ML" || token.substr(0, 2) == "MU") //Verifica se é ação de Mutex
 					{
 						AcaoMutex acao;
 						acao.tipo = (token.substr(0, 2) == "ML") ? LOCK : UNLOCK;
@@ -367,13 +335,11 @@ void Controlador::executar(int tempoDecorrido)
 						sist->criaMutex(acao.mutexId);
 					}
 				}
-
-				// Chama o método unificado que repassa ambos os vetores (mesmo vazios)
 				criaProcesso(id, c, ing, d, p, acoes, listaES);
 			}
 			else
 			{
-				std::cout << "Erro: Dados basicos incompletos!" << std::endl;
+				std::cout << "Erro: Dados incompletos!" << std::endl;
 			}
 		}
 
@@ -398,10 +364,8 @@ void Controlador::executar(int tempoDecorrido)
 
 		if (std::cin.fail())
 		{
-			std::cin.clear(); // Limpa as flags de erro (como failbit)
+			std::cin.clear(); //Limpa as flags de erro
 			std::cin.ignore(10000, '\n');
 		}
-		//else
-			//std::cout << "Opcao invalida!" << std::endl;
 	}
 }
