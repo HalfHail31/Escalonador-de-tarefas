@@ -47,8 +47,8 @@ int main()
 
                 sf::Image screenshot = texture.copyToImage(); //Tira uma captura da tela
 
-                if (screenshot.saveToFile("GraficoGant.png")) //Salva como GraficoGant.png
-                    std::cout << "Screenshot salva como GraficoGant.png" << std::endl;
+                if (screenshot.saveToFile("GraficoGantt.png")) //Salva como GraficoGant.png
+                    std::cout << "Screenshot salva como GraficoGantt.png" << std::endl;
                 else
                     std::cout << "Erro ao salvar screenshot" << std::endl;
 

@@ -72,7 +72,8 @@ void Sistema::cedeProcessador(Processo* p)
             {
                 p->mudaEstadoAtiva();
                 p->recebeCPU(i);
-                p->resetaEnvelhecimento();
+                if (aging)
+                    p->resetaEnvelhecimento();
                 processadores[i]->setFillColor(sf::Color::Red);
                 CPUsLivres--;
                 break;
