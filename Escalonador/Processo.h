@@ -49,6 +49,7 @@ struct Estado
     int prioridadeD;
     int tempoOcioso;
     int tempoOpES;
+    int terminoSuspensao;
     std::vector<OperacaoES> operacoesESRestantes;
     //std::vector<EstadoAcao> estadoAcoes;
 };
@@ -113,15 +114,15 @@ public:
     void termina(int tempoDecorrido);
     void adicionaAcao(TipoAcao tipo, int mutexId, int instante);
     void exibeAcoes();
-    const int getSaiuSuspensao();
 
+    const int getSaiuSuspensao();
     const bool getAtiva();
     const bool getIniciada();
     const bool getTerminada();
     const int getPrioridade();
 	const int getPrioridadeD();
     const int getTempoRestante();
-    int getTempoExecutado();
+    const int getTempoExecutado();
     const int getIngresso();
     const int getDuracao();
     const int getTermino();

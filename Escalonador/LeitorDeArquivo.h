@@ -13,7 +13,7 @@ Sistema* criaSimulador(Controlador* controle)
     std::string sistema; //Linha dedicada à leitura dos dados do sistema
     std::string processo; //Linhas dedicadas à leitura dos dados dos processos
 
-    std::string arq;// = "Processo.txt";
+    std::string arq;// = "caso-teste-mc-010-priopenv.txt";
     std::cout << "Insira o nome do arquivo a ser lido" << std::endl << "Exemplo: arquivo.txt" << std::endl << ">";
     std::cin >> arq;
 
@@ -39,9 +39,16 @@ Sistema* criaSimulador(Controlador* controle)
             ::tolower
         );
 
+        bool aging = false;
+        if (algoritmo.size() >= 3 && algoritmo.substr(algoritmo.size() - 3) == "env")
+        {
+            aging = true;
+            algoritmo.erase(algoritmo.size() - 3);
+        }
+
         ss >> quantum >> sep; //Anota números antes de ; em quantum
         ss >> cpus >> sep; //Anota números antes de ; em cpus
-        Sistema* sist = new Sistema(algoritmo, quantum, cpus); //Instancia o sistema com os valores recolhidos
+        Sistema* sist = new Sistema(algoritmo, quantum, cpus, aging); //Instancia o sistema com os valores recolhidos
         controle->setSistema(sist); //Para controlar e consultar os dados do sistema
 
         while (std::getline(arquivo, processo)) //Enquanto ainda houverem linhas para serem lidas

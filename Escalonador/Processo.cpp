@@ -170,8 +170,8 @@ void Processo::executar(int tempoDecorrido)
 		tempoExecutado++;
 
 	
-	prosseguir(tempoDecorrido);salvarEstado();
-
+	prosseguir(tempoDecorrido);
+	salvarEstado();
 	if (!suspensa && ativa)
 	{
 		if (!operacoesES.empty() &&
@@ -194,6 +194,7 @@ void Processo::executar(int tempoDecorrido)
 
 	if (tempoExecutado >= duracao)
 		termina(tempoDecorrido);
+	
 }
 /*
 void Processo::executarPassos(int tempoDecorrido, int dir)
@@ -342,8 +343,8 @@ void Processo::setCor(RectangleShape* rect)
 
 void Processo::prosseguir(int tempoDecorrido)
 {
-	//posX = tempoDecorrido * TAM;
-	posX = (tempoDecorrido - ingresso) * TAM;
+	posX = tempoDecorrido * TAM;
+	//posX = (tempoDecorrido - ingresso) * TAM;
 	RectangleShape* rect = new RectangleShape;
 
 	rect->setSize(Vector2f(TAM, TAM));
@@ -368,6 +369,7 @@ void Processo::salvarEstado()
 	e.prioridadeD = prioridadeD;
 	e.tempoOcioso = tempoOcioso;
 	e.tempoOpES = tempoOperacaoES;
+	e.terminoSuspensao = terminoSuspensao;
 
 	e.operacoesESRestantes.clear();
 	for (const auto& op : operacoesES)
@@ -407,6 +409,7 @@ void Processo::recuperaEstado()
 	prioridadeD = e.prioridadeD;
 	tempoOcioso = e.tempoOcioso;
 	tempoOperacaoES = e.tempoOpES;
+	terminoSuspensao = e.terminoSuspensao;
 
 	operacoesES.clear();
 	for (const auto& op : e.operacoesESRestantes)
@@ -529,7 +532,7 @@ const int Processo::getTempoRestante()
 	return duracao - tempoExecutado;
 }
 
-int Processo::getTempoExecutado()
+const int Processo::getTempoExecutado()
 {
 	return tempoExecutado;
 }

@@ -2,7 +2,7 @@
 #include "Processo.h"
 #include <iostream>
 
-Sistema::Sistema(std::string a, int q, int p) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), tempo(0), porEtapas(false), posTempo(0)
+Sistema::Sistema(std::string a, int q, int p, int ag) : algoritmo(a), quantum(q), CPUs(p), CPUsLivres(p), aging(ag), tempo(0), porEtapas(false), posTempo(0)
 {
     std::cout << "-------- Escalonador de Tarefas --------" << std::endl;
     std::cout << "Sistema operacional de " << CPUs << " processadores e quantum de " << quantum << "s" << std::endl;
@@ -276,13 +276,16 @@ void Sistema::executar(int tempoDecorrido, int dir)
     
     int tam = processos.size();
 
+    bool houveAging = false; //Para chamar o escalonador se alguma tarefa teve sua prioridade alterada
     for (Processo* p : processos)
     {
+        if (!aging) break; //Envelhecimento desativado não precisa desse laço
         if (!p->getTerminada() &&
             !p->getAtiva() &&
             tempoDecorrido >= p->getIngresso())
         {
             p->incrementaTempoOcioso();
+            houveAging = true;
         }
     }
 
@@ -307,7 +310,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
     else
     {
         avancaTempo(tempoDecorrido);
-        verificaEscalonamento(tempoDecorrido);
+        verificaEscalonamento(tempoDecorrido, houveAging);
         for (int i = 0; i < tam; i++)
         {
             if (!processos[i]->getTerminada()) //N�o precisa mais executar uma tarefa que j� terminou
@@ -316,7 +319,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
                 processos[i]->verificaAcoesMutex(this);
             }
         }
-        verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
+        verificaEscalonamento(tempoDecorrido, houveAging); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }
 
@@ -356,14 +359,15 @@ void Sistema::retornaTempo()
     legendaTempo.pop_back();
 }
 
-void Sistema::verificaEscalonamento(int tempoDecorrido) //Verifica se � necess�rio fazer um escalonamento
+void Sistema::verificaEscalonamento(int tempoDecorrido, bool houveAging) //Verifica se � necess�rio fazer um escalonamento
 {
     int tam = processos.size();
 
     for (int i = 0; i < tam; i++) //Verifica se � necess�rio escalonar algum dos processos
     {
-        //Se a tarefa acabou de ingressar ou terminar, suspender, sair da suspensão ou já executou durante o tempo de um quantum, devemos chamar o escalonamento
-        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getAcabouDeSuspender() || processos[i]->getSaiuSuspensao() == tempoDecorrido || processos[i]->getEstadoQuantum())
+        //Se a tarefa acabou de ingressar ou terminar, suspender, sair da suspensão, envelheceu ou já executou durante o tempo de um quantum, devemos chamar o escalonamento
+        if (processos[i]->getIngresso() == tempoDecorrido || processos[i]->getTermino() + 1 == tempoDecorrido || processos[i]->getAcabouDeSuspender() 
+            || processos[i]->getSaiuSuspensao() == tempoDecorrido || processos[i]->getEstadoQuantum() || houveAging)
         {
             if (algoritmo == "priop") //Escalonamento PRIOp
             {
@@ -591,6 +595,10 @@ void Sistema::desenhaLinhaDoTempo()
 void Sistema::mudaModo()
 {
     porEtapas = !porEtapas;
+    if (porEtapas)
+        std::cout << "Passo a passo ativado!" << std::endl;
+    else
+        std::cout << "Passo a passo desativado!" << std::endl;
 }
 
 bool Sistema::getPorEtapas()
@@ -598,9 +606,16 @@ bool Sistema::getPorEtapas()
     return porEtapas;
 }
 
+bool Sistema::getAging()
+{
+    return aging;
+}
+
 void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
 {
     int tam = processos.size();
+    
+    bool houveAging = false;
 
     if (Keyboard::isKeyPressed(Keyboard::Left) && !Keyboard::isKeyPressed(Keyboard::Right)) //Esquerda retrocede
     {
@@ -612,7 +627,7 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
         }
         reconstruirMutexes();
 
-        verificaEscalonamento(tempoDecorrido);
+        verificaEscalonamento(tempoDecorrido, houveAging);
         CPUsLivres = CPUs;
         for (int i = 0; i < CPUs; i++)
             processadores[i]->setFillColor(sf::Color::Green);
@@ -632,6 +647,18 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
     if (Keyboard::isKeyPressed(Keyboard::Right) && !Keyboard::isKeyPressed(Keyboard::Left)) //Direita avan�a
     {
         avancaTempo(tempoDecorrido);
+
+        for (Processo* p : processos)
+        {
+            if (!aging) break; //Envelhecimento desativado não precisa desse laço
+            if (!p->getTerminada() &&
+                !p->getAtiva() &&
+                tempoDecorrido >= p->getIngresso())
+            {
+                p->incrementaTempoOcioso();
+                houveAging = true;
+            }
+        }
         for (int i = 0; i < tam; i++)
         {
             processos[i]->executarPassos(tempoDecorrido, 1);
@@ -639,7 +666,7 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
         }
 
         reconstruirMutexes();
-        verificaEscalonamento(tempoDecorrido); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
+        verificaEscalonamento(tempoDecorrido, houveAging); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
 }
 

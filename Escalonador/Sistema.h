@@ -17,6 +17,7 @@ private:
     int CPUsLivres; //N�mero de processadores livres
     float tempo; //Tempo decorrido para o quantum
     bool porEtapas; //Define se est� no modo Por Etapas
+    bool aging; //Tarefas instanciadas em um sistema de envelhecimento devem ter um atributo aging=true passado por parâmetro
     sf::RenderWindow* janela; //Janela de exibi��o
     sf::Text legenda; //Legenda para os processadores
     sf::Font fonte; //Fonte para a legenda
@@ -28,7 +29,7 @@ private:
     std::vector<EscalonadorMutex*> mutexes;
 
 public:
-    Sistema(std::string a, int q, int p);
+    Sistema(std::string a, int q, int p, int ag);
     ~Sistema();
 
     void recebeProcesso(Processo* p);
@@ -42,7 +43,7 @@ public:
     void executar(int tempoDecorrido, int dir);
     void avancaTempo(int tempoDecorrido);
     void retornaTempo();
-    void verificaEscalonamento(int tempoDecorrido);
+    void verificaEscalonamento(int tempoDecorrido, bool houveAging);
     bool desempate(Processo* atual, Processo* candidato);
 
     void setAlgoritmo(std::string alg);/////////////////////////////////////////
@@ -62,6 +63,7 @@ public:
     void desenhaLinhaDoTempo();
     void mudaModo();
     bool getPorEtapas();
+    bool getAging();
     void simulaEtapas(int tempoDecorrido);
     std::vector<Processo*> getProcessos();
 };
