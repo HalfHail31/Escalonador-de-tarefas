@@ -2,7 +2,6 @@
 #include "Sistema.h"
 #include <iostream>
 
-
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(0),
 ativa(false), terminada(false), suspensa(false), terminoSuspensao(-1), indiceES(0), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {

@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#define ALTURA_TELA 800
+#define ALTURA_TELA 900
 #define LARGURA_TELA 1300
 #define RAIO_PROCESSADOR 20
 

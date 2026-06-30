@@ -10,7 +10,7 @@ int main()
     Sistema* sistema = criaSimulador(&control); //Cria uma inst�ncia de Sistema para a simula��o
 
     sf::RenderWindow window(sf::VideoMode(LARGURA_TELA, ALTURA_TELA), "Escalonador", sf::Style::Titlebar | sf::Style::Close); //Inst�ncia de janela SFML
-    window.setPosition(sf::Vector2i(300, 150));
+    window.setPosition(sf::Vector2i(400, 0));
 
     sf::Clock clock; //Vari�vel de registro de tempo da SFML
     float timer = 0; //Contador de tempo em float para chamada executar do sistema (a cada 1s)
