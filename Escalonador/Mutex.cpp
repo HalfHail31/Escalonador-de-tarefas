@@ -13,6 +13,13 @@ EscalonadorMutex::~EscalonadorMutex()
 
 bool EscalonadorMutex::solicitar(Processo* p)
 {
+    std::cout
+        << "[SOLICITA] "
+        << p->getId()
+        << " dono atual="
+        << (dono ? dono->getId() : "NINGUEM")
+        << std::endl;
+
     if (dono == nullptr)
     {
         dono = p;
@@ -33,7 +40,18 @@ bool EscalonadorMutex::solicitar(Processo* p)
 void EscalonadorMutex::liberar(Processo* p)
 {
     if (dono != p)
+    {
+        std::cout
+            << "[ERRO] "
+            << p->getId()
+            << " tentou liberar M"
+            << id
+            << " mas o dono é "
+            << (dono ? dono->getId() : "NINGUEM")
+            << std::endl;
+
         return;
+    }
 
 	std::cout << "[MUTEX] " << p->getId() << " liberou M" << id << std::endl;
 
@@ -46,7 +64,13 @@ void EscalonadorMutex::liberar(Processo* p)
     dono = fila.front();
     fila.pop();
 
+    dono->retornarMutex();
+
     std::cout << "[MUTEX] " << dono->getId() << " recebeu M" << id << std::endl;
+    std::cout
+        << "[DEBUG] Acordando "
+        << dono->getId()
+        << std::endl;
 }
 
 void EscalonadorMutex::reset()

@@ -39,6 +39,7 @@ struct Estado
     bool ativa;
     bool terminada;
     bool suspensa;
+    bool suspensaMutex;
     bool iniciada;
     int tempoExecutado;
     int tempoComCPU;
@@ -83,7 +84,8 @@ private:
     bool ativa; //Define se o processo está executando
     bool terminada; //Define se o processo já terminou sua execução
     bool iniciada; //Define se o processo já iniciou, isto é, ingressou no Sistema
-    bool suspensa; ///Define se o processo est� suspenso
+    bool suspensa; ///Define se o processo está suspenso por IO
+    bool suspensaMutex; //Define se o processo está suspenso por mutex
     bool recebeuMutex; //Define se possui mutex
     int terminoSuspensao; //Uma tarefa pode avisar que acabou de sair de sua suspensão
 
@@ -128,6 +130,7 @@ public:
     const int getTermino();
     const int getEstadoQuantum();
     const bool getSuspensa();
+    const bool getSuspensaMutex();
     const bool getAcabouDeSuspender();
     const int getTempoComCPU();
     const std::vector<AcaoMutex>& getAcoes();
@@ -139,6 +142,10 @@ public:
     int getIndiceCPU();
     void incrementaTempoOcioso();
     void resetaEnvelhecimento();
+    void suspenderIO();
+    void retornarIO();
+    void suspenderMutex();
+    void retornarMutex();
     void verificaAcoesMutex(Sistema* sistema);
     void adicionaOperacaoES(int inicio, int duracao);
 

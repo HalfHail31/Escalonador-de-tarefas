@@ -3,7 +3,7 @@
 #include <iostream>
 
 Processo::Processo(std::string i, unsigned long int c, int ing, int d, int p, int y) : id(i), cor((c << 8) | 0xFF), ingresso(ing), duracao(d), prioridade(p), usaMutex(false), prioridadeD(0),
-ativa(false), terminada(false), suspensa(false), terminoSuspensao(-1), indiceES(0), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
+ativa(false), terminada(false), suspensa(false), suspensaMutex(false), terminoSuspensao(-1), indiceES(0), recebeuMutex(false), iniciada(false), tempoExecutado(0), tempoComCPU(0), termino(-1), indiceCPU(-1), quantumMax(false)
 {
 	posX = ingresso * TAM;
 	posY = y * TAM * 1.5;
@@ -165,18 +165,26 @@ void Processo::executar(int tempoDecorrido)
 	if (tempoComCPU >= quantum)
 		quantumMax = true;
 
-	if (ativa && !suspensa)
+	if (ativa && !getSuspensa()) {
 		tempoExecutado++;
+
+		std::cout
+			<< "[EXEC] "
+			<< id
+			<< " tempoExecutado="
+			<< tempoExecutado
+			<< std::endl;
+	}
 
 	
 	prosseguir(tempoDecorrido);
 	salvarEstado();
-	if (!suspensa && ativa)
+	if (!getSuspensa() && ativa)
 	{
 		if (!operacoesES.empty() &&
 			tempoExecutado >= operacoesES[0].instanteInicio)
 		{
-			mudaEstadoSuspensa();
+			suspenderIO();
 			tempoOperacaoES = operacoesES.front().duracao;
 			operacoesES.erase(operacoesES.begin());
 		}
@@ -186,7 +194,7 @@ void Processo::executar(int tempoDecorrido)
 		tempoOperacaoES--;
 		if (tempoOperacaoES == 0)
 		{
-			mudaEstadoSuspensa();
+			retornarIO();
 			terminoSuspensao = tempoDecorrido;
 		}
 	}
@@ -285,6 +293,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		ativa = false;
 		terminada = false;
 		suspensa = false;
+		suspensaMutex = false;
 		tempoExecutado = 0;
 		tempoComCPU = 0;
 		termino = -1;
@@ -323,6 +332,11 @@ void Processo::setCor(RectangleShape* rect)
 		rect->setFillColor(sf::Color::Blue);
 		legenda.setFillColor(sf::Color::Blue);
 	}
+	else if (suspensaMutex)
+	{
+		rect->setFillColor(sf::Color(255, 140, 0));
+		legenda.setFillColor(sf::Color(255, 140, 0));
+	}
 	else if (suspensa)
 	{
 		rect->setFillColor(sf::Color::Black);
@@ -358,6 +372,7 @@ void Processo::salvarEstado()
 	e.ativa = ativa;
 	e.terminada = terminada;
 	e.suspensa = suspensa;
+	e.suspensaMutex = suspensaMutex;
 	e.iniciada = iniciada;
 	e.tempoExecutado = tempoExecutado;
 	e.tempoComCPU = tempoComCPU;
@@ -398,6 +413,7 @@ void Processo::recuperaEstado()
 	ativa = e.ativa;
 	terminada = e.terminada;
 	suspensa = e.suspensa;
+	suspensaMutex = e.suspensaMutex;
 	iniciada = e.iniciada;
 	tempoExecutado = e.tempoExecutado;
 	tempoComCPU = e.tempoComCPU;
@@ -575,7 +591,12 @@ const int Processo::getEstadoQuantum()
 
 const bool Processo::getSuspensa()
 {
-	return suspensa;
+	return suspensa || suspensaMutex;
+}
+
+const bool Processo::getSuspensaMutex()
+{
+	return suspensaMutex;
 }
 
 void Processo::setQuantum(int q)
@@ -647,6 +668,29 @@ void Processo::resetaEnvelhecimento()
 	tempoOcioso = 0;
 }
 
+void Processo::suspenderIO()
+{
+	suspensa = true;
+	if (ativa)
+		mudaEstadoAtiva();
+}
+
+void Processo::retornarIO()
+{
+	suspensa = false;
+}
+
+void Processo::suspenderMutex()
+{
+	suspensaMutex = true;
+	//ativa = false;
+}
+
+void Processo::retornarMutex()
+{
+	suspensaMutex = false;
+}
+
 void Processo::verificaAcoesMutex(Sistema* sistema)
 {
 	for (AcaoMutex& acao : acoes)
@@ -674,7 +718,16 @@ void Processo::verificaAcoesMutex(Sistema* sistema)
 				<< acao.mutexId
 				<< std::endl;
 
-			mutex->solicitar(this);
+			if (!mutex->solicitar(this))
+			{
+				acao.executada = true;
+
+				suspenderMutex();
+
+				sistema->retiraProcessador(this);
+
+				return;
+			}
 		}
 		else
 		{

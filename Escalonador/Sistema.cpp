@@ -316,12 +316,13 @@ void Sistema::executar(int tempoDecorrido, int dir)
         {
             if (!processos[i]->getTerminada()) //N�o precisa mais executar uma tarefa que j� terminou
             {
-                processos[i]->executar(tempoDecorrido);
                 processos[i]->verificaAcoesMutex(this);
+                processos[i]->executar(tempoDecorrido);
             }
         }
-        verificaEscalonamento(tempoDecorrido, houveAging); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
+        verificaEscalonamento(tempoDecorrido, true); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
     }
+
 }
 
 void Sistema::avancaTempo(int tempoDecorrido)
@@ -362,6 +363,24 @@ void Sistema::retornaTempo()
 
 void Sistema::verificaEscalonamento(int tempoDecorrido, bool houveAging) //Verifica se � necess�rio fazer um escalonamento
 {
+    std::cout << "\n========== ESCALONAMENTO T=" << tempoDecorrido << " ==========\n";
+
+    for (Processo* p : processos)
+    {
+        std::cout
+            << p->getId()
+            << " | ativa=" << p->getAtiva()
+            << " susp=" << p->getSuspensa()
+            << " mutex=" << p->getSuspensaMutex()
+            << " terminou=" << p->getTerminada()
+            << " cpu=" << p->getIndiceCPU()
+            << " exec=" << p->getTempoExecutado()
+            << " prioridade=" << p->getPrioridade()
+            << '\n';
+    }
+
+    std::cout << "=========================================\n";
+
     int tam = processos.size();
 
     for (int i = 0; i < tam; i++) //Verifica se � necess�rio escalonar algum dos processos
