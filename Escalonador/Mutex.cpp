@@ -13,26 +13,25 @@ EscalonadorMutex::~EscalonadorMutex()
 
 bool EscalonadorMutex::solicitar(Processo* p)
 {
-    std::cout
+    /*std::cout
         << "[SOLICITA] "
         << p->getId()
         << " dono atual="
         << (dono ? dono->getId() : "NINGUEM")
-        << std::endl;
+        << std::endl;*/
 
     if (dono == nullptr)
     {
         dono = p;
 
-        std::cout << "[MUTEX] " << p->getId() << " obteve M" << id << std::endl;
+        //std::cout << "[MUTEX] " << p->getId() << " obteve M" << id << std::endl;
 
         return true;
     }
 
     fila.push(p);
 
-	std::cout
-		<< "[MUTEX] " << p->getId() << " entrou na fila de espera de M" << id << std::endl;
+	//std::cout << "[MUTEX] " << p->getId() << " entrou na fila de espera de M" << id << std::endl;
 
     return false;
 }
@@ -41,19 +40,19 @@ void EscalonadorMutex::liberar(Processo* p)
 {
     if (dono != p)
     {
-        std::cout
+        /*std::cout
             << "[ERRO] "
             << p->getId()
             << " tentou liberar M"
             << id
             << " mas o dono é "
             << (dono ? dono->getId() : "NINGUEM")
-            << std::endl;
+            << std::endl;*/
 
         return;
     }
 
-	std::cout << "[MUTEX] " << p->getId() << " liberou M" << id << std::endl;
+	//std::cout << "[MUTEX] " << p->getId() << " liberou M" << id << std::endl;
 
     if (fila.empty())
     {
@@ -66,11 +65,11 @@ void EscalonadorMutex::liberar(Processo* p)
 
     dono->retornarMutex();
 
-    std::cout << "[MUTEX] " << dono->getId() << " recebeu M" << id << std::endl;
+    /*std::cout << "[MUTEX] " << dono->getId() << " recebeu M" << id << std::endl;
     std::cout
         << "[DEBUG] Acordando "
         << dono->getId()
-        << std::endl;
+        << std::endl;*/
 }
 
 void EscalonadorMutex::reset()

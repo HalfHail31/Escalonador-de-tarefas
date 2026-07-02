@@ -320,7 +320,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
                 processos[i]->executar(tempoDecorrido, this);
             }
         }
-        verificaEscalonamento(tempoDecorrido, true); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
+        verificaEscalonamento(tempoDecorrido, houveAging);
     }
 
 }
@@ -363,7 +363,7 @@ void Sistema::retornaTempo()
 
 void Sistema::verificaEscalonamento(int tempoDecorrido, bool houveAging) //Verifica se � necess�rio fazer um escalonamento
 {
-    std::cout << "\n========== ESCALONAMENTO T=" << tempoDecorrido << " ==========\n";
+    /*std::cout << "\n========== ESCALONAMENTO T=" << tempoDecorrido << " ==========\n";
 
     for (Processo* p : processos)
     {
@@ -379,7 +379,7 @@ void Sistema::verificaEscalonamento(int tempoDecorrido, bool houveAging) //Verif
             << '\n';
     }
 
-    std::cout << "=========================================\n";
+    std::cout << "=========================================\n";*/
 
     int tam = processos.size();
 
@@ -391,13 +391,13 @@ void Sistema::verificaEscalonamento(int tempoDecorrido, bool houveAging) //Verif
         {
             if (algoritmo == "priop") //Escalonamento PRIOp
             {
-                std::cout << "Escalonando com PRIOp" << std::endl;
+                //std::cout << "Escalonando com PRIOp" << std::endl;
                 executarPRIOp(tempoDecorrido);
                 break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
             }
             else if (algoritmo == "srtf") //Escalonamento SRTF
             {
-                std::cout << "Escalonando com SRTF" << std::endl;
+                //std::cout << "Escalonando com SRTF" << std::endl;
                 executarSRTF(tempoDecorrido);
                 break; //N�o tem porque continuar iterando se o escalonador j� foi chamado
             }
@@ -524,6 +524,9 @@ void Sistema::reconstruirMutexes()
 
     for (auto processo : processos)
     {
+        // Garantir que o estado de suspensão por mutex comece limpo; será reconstruído abaixo
+        processo->retornarMutex();
+
         int tempoExecutado =
             processo->getTempoExecutado();
 
@@ -543,7 +546,9 @@ void Sistema::reconstruirMutexes()
 
             if (acao.tipo == LOCK)
             {
-                mutex->solicitar(processo);
+                bool ok = mutex->solicitar(processo);
+                if (!ok)
+                    processo->suspenderMutex();
             }
             else
             {
