@@ -65,6 +65,41 @@ void Processo::desenha(RenderWindow* window) //Desenha o processo
 
 			sf::Color corGrade(sf::Color::Red);
 
+			if (suspensaMutex) //Cerquilha azul se a suspensão for por mutex
+				corGrade = sf::Color(255, 140, 0);
+
+			float tercoX = sizeRect.x / 3.0f;
+			float tercoY = sizeRect.y / 3.0f;
+
+			sf::Vertex hLine1[] = {
+				sf::Vertex(sf::Vector2f(pos.x, pos.y + tercoY), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + sizeRect.x, pos.y + tercoY), corGrade)
+			};
+			sf::Vertex hLine2[] = {
+				sf::Vertex(sf::Vector2f(pos.x, pos.y + 2 * tercoY), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + sizeRect.x, pos.y + 2 * tercoY), corGrade)
+			};
+
+			sf::Vertex vLine1[] = {
+				sf::Vertex(sf::Vector2f(pos.x + tercoX, pos.y), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + tercoX, pos.y + sizeRect.y), corGrade)
+			};
+			sf::Vertex vLine2[] = {
+				sf::Vertex(sf::Vector2f(pos.x + 2 * tercoX, pos.y), corGrade),
+				sf::Vertex(sf::Vector2f(pos.x + 2 * tercoX, pos.y + sizeRect.y), corGrade)
+			};
+			window->draw(hLine1, 2, sf::Lines);
+			window->draw(hLine2, 2, sf::Lines);
+			window->draw(vLine1, 2, sf::Lines);
+			window->draw(vLine2, 2, sf::Lines);
+		}
+		/*else if (tamanho[i]->getFillColor() == sf::Color(255, 140, 0)) //Destaca uma tarefa suspensa com uma grade #
+		{
+			sf::Vector2f pos = tamanho[i]->getPosition();
+			sf::Vector2f sizeRect = tamanho[i]->getSize();
+
+			sf::Color corGrade(sf::Color::Black);
+
 			if (usaMutex && tempoExecutado >= getAcoes().back().instante) //Cerquilha azul se a suspensão for por mutex
 				corGrade = sf::Color::Blue;
 
@@ -92,7 +127,7 @@ void Processo::desenha(RenderWindow* window) //Desenha o processo
 			window->draw(hLine2, 2, sf::Lines);
 			window->draw(vLine1, 2, sf::Lines);
 			window->draw(vLine2, 2, sf::Lines);
-		}
+		}*/
 	}
 	if (iniciada)
 	{
@@ -149,13 +184,15 @@ void Processo::executar(int tempoDecorrido)
 	}
 }*/
 
-void Processo::executar(int tempoDecorrido)
+void Processo::executar(int tempoDecorrido, Sistema* sistema)
 {
 	if (tempoDecorrido < ingresso || terminada)
 		return;
 
 	if (!iniciada)
 		iniciada = true;
+
+	verificaAcoesMutex(sistema);
 
 	if (ativa)
 		tempoComCPU++;
@@ -199,8 +236,10 @@ void Processo::executar(int tempoDecorrido)
 		}
 	}
 
-	if (tempoExecutado >= duracao)
+	if (tempoExecutado >= duracao) {
+		liberarTodosMutex(sistema);
 		termina(tempoDecorrido);
+	}
 	
 }
 /*
@@ -285,7 +324,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 	if (tempoExecutado == 0)
 		legenda.setFillColor(sf::Color::Transparent); //Oculta a legenda caso retroceda até a tarefa não ter iniciado
 }*/
-void Processo::executarPassos(int tempoDecorrido, int dir)
+void Processo::executarPassos(int tempoDecorrido, int dir, Sistema* sistema)
 {
 	if (tempoDecorrido < ingresso)
 	{
@@ -322,7 +361,7 @@ void Processo::executarPassos(int tempoDecorrido, int dir)
 		retroceder(tempoDecorrido);
 	}
 	else if (dir == 1)
-		executar(tempoDecorrido);
+		executar(tempoDecorrido, sistema);
 }
 
 void Processo::setCor(RectangleShape* rect)
@@ -332,16 +371,16 @@ void Processo::setCor(RectangleShape* rect)
 		rect->setFillColor(sf::Color::Blue);
 		legenda.setFillColor(sf::Color::Blue);
 	}
-	else if (suspensaMutex)
-	{
-		rect->setFillColor(sf::Color(255, 140, 0));
-		legenda.setFillColor(sf::Color(255, 140, 0));
-	}
-	else if (suspensa)
+	else if (suspensa||suspensaMutex)
 	{
 		rect->setFillColor(sf::Color::Black);
 		legenda.setFillColor(sf::Color::Black);
 	}
+	/*else if (suspensaMutex)
+	{
+		rect->setFillColor(sf::Color(255, 140, 0));
+		legenda.setFillColor(sf::Color(255, 140, 0));
+	}*/
 	else if (ativa)
 	{
 		rect->setFillColor(cor);
@@ -373,6 +412,12 @@ void Processo::salvarEstado()
 	e.terminada = terminada;
 	e.suspensa = suspensa;
 	e.suspensaMutex = suspensaMutex;
+	if (suspensaMutex)
+		e.cor = sf::Color(255, 140, 0);
+	else if (suspensa)
+		e.cor = sf::Color::Red;
+	else
+		e.cor = cor;
 	e.iniciada = iniciada;
 	e.tempoExecutado = tempoExecutado;
 	e.tempoComCPU = tempoComCPU;
@@ -414,6 +459,7 @@ void Processo::recuperaEstado()
 	terminada = e.terminada;
 	suspensa = e.suspensa;
 	suspensaMutex = e.suspensaMutex;
+	cor = e.cor;
 	iniciada = e.iniciada;
 	tempoExecutado = e.tempoExecutado;
 	tempoComCPU = e.tempoComCPU;
@@ -693,6 +739,9 @@ void Processo::retornarMutex()
 
 void Processo::verificaAcoesMutex(Sistema* sistema)
 {
+	if (!iniciada || terminada)
+		return;
+
 	for (AcaoMutex& acao : acoes)
 	{
 		if (acao.executada)
@@ -743,6 +792,20 @@ void Processo::verificaAcoesMutex(Sistema* sistema)
 			mutex->liberar(this);
 		}
 		acao.executada = true;
+	}
+}
+
+void Processo::liberarTodosMutex(Sistema* sistema)
+{
+	for (const AcaoMutex& acao : acoes)
+	{
+		if (acao.tipo != LOCK)
+			continue;
+
+		EscalonadorMutex* mutex = sistema->getMutex(acao.mutexId);
+
+		if (mutex)
+			mutex->liberar(this);
 	}
 }
 

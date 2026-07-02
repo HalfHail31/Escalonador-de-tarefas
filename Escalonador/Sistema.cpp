@@ -317,7 +317,7 @@ void Sistema::executar(int tempoDecorrido, int dir)
             if (!processos[i]->getTerminada()) //N�o precisa mais executar uma tarefa que j� terminou
             {
                 processos[i]->verificaAcoesMutex(this);
-                processos[i]->executar(tempoDecorrido);
+                processos[i]->executar(tempoDecorrido, this);
             }
         }
         verificaEscalonamento(tempoDecorrido, true); //Verificação de segurança, antes e depois para evitar inconsistências no passo a passo
@@ -643,7 +643,7 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
 
         for (int i = 0; i < tam; i++)
         {
-            processos[i]->executarPassos(tempoDecorrido, -1);
+            processos[i]->executarPassos(tempoDecorrido, -1, this);
         }
         reconstruirMutexes();
 
@@ -681,8 +681,8 @@ void Sistema::simulaEtapas(int tempoDecorrido) //Fun��o para modo Por Etapas
         }
         for (int i = 0; i < tam; i++)
         {
-            processos[i]->executarPassos(tempoDecorrido, 1);
-            processos[i]->verificaAcoesMutex(this);
+            processos[i]->executarPassos(tempoDecorrido, 1, this);
+            //processos[i]->verificaAcoesMutex(this);
         }
 
         reconstruirMutexes();

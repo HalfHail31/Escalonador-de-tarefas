@@ -41,6 +41,7 @@ struct Estado
     bool suspensa;
     bool suspensaMutex;
     bool iniciada;
+    sf::Color cor;
     int tempoExecutado;
     int tempoComCPU;
     int termino;
@@ -77,6 +78,7 @@ private:
     int tempoOperacaoES; //Contador de tempo em que o processo executa a operação de E/S
     std::vector<OperacaoES> operacoesES; //Permite que uma mesma tarefa faça várias operações de E/S
     int indiceES;
+    //Sistema* sistema;
 
     int posX; //Posição em x para o processo ser desenhado, calculado com base em ingresso
     int posY; //Posição em y para o processo ser desenhado, calculada a partir da quantidade de itera��es da fun��o criaSimulador()
@@ -104,8 +106,8 @@ public:
     ~Processo();
 
     void desenha(RenderWindow* window);
-    void executar(int tempoDecorrido);
-    void executarPassos(int tempoDecorrido, int dir);
+    void executar(int tempoDecorrido, Sistema* sistema);
+    void executarPassos(int tempoDecorrido, int dir, Sistema* sistema);
     void setCor(RectangleShape* rect);
     void prosseguir(int tempoDecorrido);
     void retroceder(int tempoDecorrido);
@@ -147,6 +149,7 @@ public:
     void suspenderMutex();
     void retornarMutex();
     void verificaAcoesMutex(Sistema* sistema);
+    void liberarTodosMutex(Sistema* sistema);
     void adicionaOperacaoES(int inicio, int duracao);
 
     std::string getId(); //Fun��es para editar uma tarefa
